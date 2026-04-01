@@ -1,0 +1,216 @@
+"""
+agents/router_agent.py
+
+Intent Router Agent — the entry point of every user request.
+
+Responsibilities:
+    1. Query Rewrite: normalise informal / ambiguous queries using an LLM prompt
+       so that downstream agents receive a well-formed, explicit query.
+    2. Intent Classification: decide which specialist agent should handle the
+       rewritten query (FAQ, ORDER, LOGISTICS, REFUND, or UNKNOWN).
+    3. LangGraph Routing: expose a `route` method that acts as a LangGraph node
+       and returns the name of the next node to transition to.
+
+Design rationale:
+    - Separating rewrite from classification keeps each step testable.
+    - A few-shot LLM prompt handles most classification; a fine-tuned
+      lightweight classifier (e.g. BERT on ~1 k labelled examples) can be
+      swapped in for lower latency and higher accuracy.
+    - The router is intentionally stateless; all state is stored in AgentState
+      (graph/agent_graph.py) and threaded through the graph.
+"""
+
+from __future__ import annotations
+
+import logging
+from enum import Enum
+from typing import Any
+
+logger = logging.getLogger(__name__)
+
+
+# --------------------------------------------------------------------------- #
+# Intent taxonomy                                                              #
+# --------------------------------------------------------------------------- #
+
+
+class IntentType(str, Enum):
+    """
+    Exhaustive set of intents the router can classify.
+
+    Values are plain strings so they serialise cleanly to JSON / Redis.
+
+    Implementation note:
+        Extend this enum if the business adds new service categories
+        (e.g. MULTIMODAL for image-based complaints).
+    """
+
+    FAQ = "faq"
+    ORDER = "order"
+    LOGISTICS = "logistics"
+    REFUND = "refund"
+    UNKNOWN = "unknown"
+
+
+# --------------------------------------------------------------------------- #
+# Router Agent                                                                 #
+# --------------------------------------------------------------------------- #
+
+
+class RouterAgent:
+    """
+    Stateless LangGraph node that rewrites the user query and routes it to
+    the appropriate specialist agent.
+
+    Attributes:
+        llm: An LLM client instance (e.g. langchain_openai.ChatOpenAI pointed
+             at a local vLLM server, or a HuggingFace pipeline wrapper).
+             The same LLM is reused for both rewrite and classification.
+        intent_labels: Ordered list of IntentType values used in the
+                       classification prompt to enumerate valid choices.
+
+    Typical LangGraph usage:
+        graph.add_node("router", router_agent.route)
+        graph.add_conditional_edges("router", router_agent.route, {
+            "faq":       "faq_agent",
+            "order":     "order_agent",
+            "logistics": "order_agent",   # order_agent handles logistics too
+            "refund":    "order_agent",
+            "unknown":   "response_agent",
+        })
+    """
+
+    def __init__(self, llm: Any) -> None:
+        """
+        Initialise the router with an LLM instance.
+
+        Args:
+            llm: Any LangChain-compatible chat model (supports .invoke() /
+                 .ainvoke()).  Recommended: ChatOpenAI with model pointed at
+                 vLLM serving Qwen2.5-7B-Instruct.
+
+        TODO:
+            - Store llm as self.llm.
+            - Optionally load a fine-tuned intent classifier from disk
+              (transformers AutoModelForSequenceClassification) and store as
+              self.classifier for sub-20 ms classification without an LLM call.
+        """
+        # TODO: implement
+        pass
+
+    # ---------------------------------------------------------------------- #
+    # Step 1 – Query Rewrite                                                  #
+    # ---------------------------------------------------------------------- #
+
+    def rewrite_query(self, query: str, history: list[dict]) -> str:
+        """
+        Use the LLM to rewrite an informal user query into a canonical form
+        that improves retrieval and tool-selection accuracy.
+
+        Args:
+            query:   Raw user input, e.g. "快递怎么还没到？"
+            history: List of previous turns [{"role": "user"|"assistant",
+                     "content": "..."}] for coreference resolution.
+                     An empty list means no prior context.
+
+        Returns:
+            Rewritten query string, e.g.
+            "查询订单 ORD-20240310-001 的物流状态"
+
+        How to implement:
+            1. Build a system prompt that instructs the LLM to:
+               - Resolve pronouns using history ("它" → the specific product).
+               - Expand abbreviations / slang.
+               - Add implicit context (order number if mentioned earlier).
+               - Output ONLY the rewritten query, no explanation.
+            2. Format `history` into a conversational prompt block.
+            3. Call self.llm.invoke([SystemMessage(...), *history, HumanMessage(query)]).
+            4. Strip leading/trailing whitespace from the response.
+            5. If the LLM call fails, fall back to returning `query` unchanged
+               and log a warning — never crash the pipeline on rewrite failure.
+
+        Example prompt snippet:
+            "You are a query rewriting assistant for an e-commerce customer
+             service chatbot. Given the conversation history and the user's
+             latest message, output a single rewritten query in Mandarin
+             Chinese that is self-contained and specific. Output ONLY the
+             rewritten query."
+        """
+        # TODO: implement
+        pass
+
+    # ---------------------------------------------------------------------- #
+    # Step 2 – Intent Classification                                          #
+    # ---------------------------------------------------------------------- #
+
+    def classify_intent(self, query: str) -> IntentType:
+        """
+        Classify the (rewritten) query into one of the IntentType categories.
+
+        Args:
+            query: Rewritten, normalised user query.
+
+        Returns:
+            IntentType enum member representing the predicted intent.
+
+        How to implement (choose one approach based on latency budget):
+
+        Approach A — LLM few-shot classification (simplest, ~200–500 ms):
+            1. Build a prompt listing all IntentType values with one example each.
+            2. Ask the LLM to respond with ONLY the intent label (one word).
+            3. Parse the response; on parse failure return IntentType.UNKNOWN.
+
+        Approach B — Fine-tuned classifier (recommended for production, ~10 ms):
+            1. Collect ~500–2 000 labelled query examples per intent.
+            2. Fine-tune bert-base-chinese or a smaller BERT variant using
+               Hugging Face Trainer on the intent classification task.
+            3. At inference: tokenize → forward pass → argmax over logits.
+            4. Map predicted class index to IntentType.
+
+        Approach C — Keyword heuristics (fast baseline):
+            1. Maintain keyword → IntentType mapping dicts.
+            2. Return the first matching intent; default to UNKNOWN.
+            3. Use as fallback when LLM is unavailable.
+
+        Key metric: intent accuracy target ≥ 93%.
+        """
+        # TODO: implement
+        pass
+
+    # ---------------------------------------------------------------------- #
+    # Step 3 – LangGraph node                                                 #
+    # ---------------------------------------------------------------------- #
+
+    def route(self, state: dict) -> str:
+        """
+        LangGraph node function.  Reads from `state`, rewrites the query,
+        classifies intent, updates state, and returns the name of the next node.
+
+        Args:
+            state: AgentState TypedDict (see graph/agent_graph.py).
+                   Relevant keys: "query", "history", "user_id".
+
+        Returns:
+            String name of the next graph node, one of:
+            "faq_agent", "order_agent", "response_agent".
+
+        How to implement:
+            1. Extract query = state["query"] and history = state.get("history", []).
+            2. Call self.rewrite_query(query, history) → rewritten.
+            3. Update state["rewritten_query"] = rewritten.
+            4. Call self.classify_intent(rewritten) → intent.
+            5. Update state["intent"] = intent.value.
+            6. Log the routing decision at INFO level.
+            7. Use a mapping dict to convert IntentType → node name string.
+               FAQ      → "faq_agent"
+               ORDER    → "order_agent"
+               LOGISTICS→ "order_agent"   # OrderAgent handles all tool calls
+               REFUND   → "order_agent"
+               UNKNOWN  → "response_agent"
+            8. Return the node name string (LangGraph uses this for edge routing).
+
+        Note: LangGraph passes `state` as a dict; mutate it in-place and
+        return the routing key so conditional_edges can pick the right branch.
+        """
+        # TODO: implement
+        pass

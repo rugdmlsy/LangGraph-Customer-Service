@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>&#x5b9e;&#x65bd;&#x6307;&#x5357; &mdash; &#x591a;&#x4ee3;&#x7406;&#x7535;&#x5546;&#x5ba2;&#x670d;&#x7cfb;&#x7edf;</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <h1 id="实施指南--多代理电商客服系统">实施指南 — 多代理电商客服系统</h1>
+<p>本指南提供了一个分阶段、依赖有序的实施计划。按照阶段顺序：每个阶段建立在上一个阶段的基础上，并且每个阶段内的每个文件都列出了它在下一个之前的原因。</p>
+<hr>
+<h2 id="概述">概述</h2>
+<pre><code>阶段 1 — 基础        (第 1 周)：设置、模拟服务、工具、基本测试
+阶段 2 — RAG 管道      (第 2 周)：分块器 → 嵌入器 → 知识库 → 检索器
+阶段 3 — 记忆            (第 2 周)：短期 → 长期
+阶段 4 — 代理            (第 3 周)：响应代理 → FAQ 代理 → 订单代理 → 路由代理
+阶段 5 — 图              (第 3 周)：代理图 → 端到端测试
+阶段 6 — API &amp; 队列       (第 4 周)：消息队列 → 工作者 → api/main.py
+阶段 7 — 评估            (第 4 周)：RAGAS 评估器 → 离线评估器 → 基线运行
+阶段 8 — 优化            (第 5 周)：调整检索，调整路由，提高提示
+</code></pre>
+<hr>
+<h2 id="阶段-1--基础第-1-周">阶段 1 — 基础（第 1 周）</h2>
+<p><strong>目标</strong>：获得一个可运行的环境，具有配置、模拟数据和工具骨架，以便所有后续阶段都有具体的构建对象。</p>
+<h3 id="步骤-11configsettingspy">步骤 1.1：<code>config/settings.py</code></h3>
+<p>首先实施，因为每个其他模块都从它导入。实施是微不足道的（pydantic-settings BaseSettings），但必须在任何其他东西可以配置之前完成。</p>
+<p>关键函数实施：</p>
+<ul>
+<li><code>Settings.__init__</code> —— 让 pydantic-settings 处理它；验证 <code>.env</code> 文件加载工作。</li>
+<li>测试：<code>python -c &quot;from config import settings; print(settings.MILVUS_HOST)&quot;</code> 应该打印 <code>localhost</code>。</li>
+</ul>
+<h3 id="步骤-12servicesmock_order_servicepy">步骤 1.2：<code>services/mock_order_service.py</code></h3>
+<p>接下来实施，因为工具函数（阶段 1.3）委托给这个服务。让服务先工作，使工具测试独立于工具包装器。</p>
+<p>按此顺序实施：</p>
+<ol>
+<li><code>__init__</code> —— 将种子数据 dict 复制到实例属性。</li>
+<li><code>get_order</code> —— 简单 dict 查找。</li>
+<li><code>get_order_status</code> —— 在内部使用 <code>get_order</code>。</li>
+<li><code>get_orders_by_user</code> —— 按 user_id 过滤。</li>
+<li><code>check_refund_eligibility</code> —— 最逻辑重的函数；仔细测试 7 天窗口。</li>
+<li><code>create_refund</code> —— 在内部调用 <code>check_refund_eligibility</code>。</li>
+<li><code>get_refund_status</code> —— 简单 dict 查找。</li>
+</ol>
+<p>关键路径：<code>check_refund_eligibility</code> 被 <code>create_refund</code> 调用；正确获取时间比较。</p>
+<h3 id="步骤-13servicesmock_logistics_servicepy">步骤 1.3：<code>services/mock_logistics_service.py</code></h3>
+<p>与 mock_order_service 并行实施（无依赖）。</p>
+<p>实施 <code>get_logistics</code> 和 <code>get_tracking</code> —— 两者都是从种子数据 dict 查找。</p>
+<h3 id="步骤-14toolsorder_toolspytoolslogistics_toolspytoolsrefund_toolspy">步骤 1.4：<code>tools/order_tools.py</code>、<code>tools/logistics_tools.py</code>、<code>tools/refund_tools.py</code></h3>
+<p>工具包装器是薄的：每个是 <code>@tool</code>-装饰的函数，调用相应的模拟服务方法。主要实施任务是验证 <code>@tool</code> 装饰器正确应用，函数 docstring 信息丰富（LLM 使用 docstring 作为工具描述）。</p>
+<p>每个工具的实施步骤：</p>
+<ol>
+<li>导入模块级服务单例。</li>
+<li>调用 <code>service.method(args)</code> 并返回结果。</li>
+<li>用：<code>from tools.order_tools import get_order_status; print(get_order_status.name)</code> 验证。</li>
+</ol>
+<h3 id="步骤-15teststest_toolspy">步骤 1.5：<code>tests/test_tools.py</code></h3>
+<p>现在运行工具测试，在接触任何代理代码之前。这些测试快速（无需 LLM），并验证整个模拟服务 + 工具层。</p>
+<p>运行：<code>pytest tests/test_tools.py -v</code></p>
+<p>阶段 1 结束时，所有测试应该通过。如果 <code>check_refund_eligibility</code> 测试由于日期逻辑失败，在继续之前修复服务。</p>
+<hr>
+<h2 id="阶段-2--rag-管道第-2-周">阶段 2 — RAG 管道（第 2 周）</h2>
+<p><strong>目标</strong>：构建文档摄取和检索管道。到这个阶段结束时，你应该能够将 FAQ 文档插入 Milvus 并检索相关块用于查询。</p>
+<h3 id="步骤-21ragchunkerpy">步骤 2.1：<code>rag/chunker.py</code></h3>
+<p>首先实施 <code>SlidingWindowChunker.chunk()</code>。它没有外部依赖，易于单元测试。</p>
+<p>实施说明：</p>
+<ul>
+<li>在 <code>__init__</code> 中验证 <code>chunk_size &gt; overlap</code>。</li>
+<li>使用 <code>while</code> 循环与 <code>stride = chunk_size - overlap</code> 而不是 <code>range()</code> 以避免 off-by-one 错误。</li>
+<li><code>chunk_with_metadata</code> 是微不足道的包装器；在 <code>chunk</code> 之后实施。</li>
+</ul>
+<p>立即测试：<code>pytest tests/test_rag.py::TestSlidingWindowChunker -v</code></p>
+<h3 id="步骤-22ragembedderpy">步骤 2.2：<code>rag/embedder.py</code></h3>
+<p>在分块器之后实施。因为 <code>KnowledgeBase.load_from_file()</code> 调用两者。</p>
+<p>实施说明：</p>
+<ul>
+<li>使 <code>_load_model()</code> 幂等（仅在 <code>self.model is None</code> 时加载）。</li>
+<li>总是传递 <code>normalize_embeddings=True</code> 到 <code>model.encode()</code>。</li>
+<li>返回 <code>vectors.tolist()</code>（不是 numpy 数组）用于 JSON 可序列化和 Milvus 兼容性。</li>
+<li>通过捕获 <code>RuntimeError</code> 并重试 <code>batch_size // 2</code> 来处理 GPU OOM。</li>
+</ul>
+<p>测试：<code>pytest tests/test_rag.py::TestEmbedder -v</code>（所有测试使用模拟，无需 GPU）。</p>
+<h3 id="步骤-23ragknowledge_basepy">步骤 2.3：<code>rag/knowledge_base.py</code></h3>
+<p>在嵌入器之后实施。摄取管道（<code>load_from_file</code>）链接分块器 + 嵌入器 + Milvus 插入。</p>
+<p>实施顺序：</p>
+<ol>
+<li><code>connect()</code> —— 一行 <code>connections.connect()</code> 调用。</li>
+<li><code>create_collection()</code> —— 定义模式并处理&quot;集合已存在&quot;情况。</li>
+<li><code>insert()</code> —— 批插入与 <code>collection.flush()</code>。</li>
+<li><code>build_index()</code> —— 创建 HNSW 索引并调用 <code>collection.load()</code>。</li>
+<li><code>load_from_file()</code> —— 为每个文档链接以上所有。</li>
+</ol>
+<p>关键：在所有数据插入后调用 <code>build_index()</code>，而不是每个批次后。部分填充集合构建索引浪费时间。</p>
+<p>集成测试（手动，需要运行 Milvus）：</p>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> config <span class="hljs-keyword">import</span> settings
+<span class="hljs-keyword">from</span> rag <span class="hljs-keyword">import</span> SlidingWindowChunker, Embedder, KnowledgeBase
+embedder = Embedder(settings.EMBEDDING_MODEL_NAME)
+chunker  = SlidingWindowChunker()
+kb = KnowledgeBase(embedder, chunker)
+kb.connect()
+kb.create_collection(<span class="hljs-string">&quot;test_col&quot;</span>, dim=<span class="hljs-number">384</span>)
+kb.load_from_file(<span class="hljs-string">&quot;data/raw/faq.jsonl&quot;</span>)
+kb.build_index()
+</code></pre>
+<h3 id="步骤-24ragretrieverpy">步骤 2.4：<code>rag/retriever.py</code></h3>
+<p>在 knowledge_base 之后实施。检索器假设集合已连接和加载。</p>
+<p>实施顺序：</p>
+<ol>
+<li><code>dense_search()</code> —— 调用 <code>collection.search()</code> 并解析 Hit 对象。</li>
+<li><code>build_bm25()</code> —— 用 jieba 分词语料，构建 BM25Okapi 索引。</li>
+<li><code>sparse_search()</code> —— 调用 <code>bm25_index.get_scores()</code> 并返回 top-k。</li>
+<li><code>hybrid_search()</code> —— 实施 RRF 融合结合密集和稀疏结果。</li>
+<li><code>rerank()</code> —— 懒加载 CrossEncoder，调用 <code>.predict()</code>，按分数排序。</li>
+</ol>
+<p>测试顺序：首先测试 <code>dense_search</code>（最简单），然后 <code>sparse_search</code>，然后 <code>hybrid_search</code>（取决于两者）。独立测试 <code>rerank</code>。</p>
+<p>运行：<code>pytest tests/test_rag.py::TestRetriever -v</code></p>
+<hr>
+<h2 id="阶段-3--记忆第-2-周">阶段 3 — 记忆（第 2 周）</h2>
+<p><strong>目标</strong>：实施两个记忆层。这些很简单，但必须在代理之前完成，以便代理可以使用历史。</p>
+<h3 id="步骤-31memoryshort_termpy">步骤 3.1：<code>memory/short_term.py</code></h3>
+<p>实施所有方法。这是一个薄包装 <code>collections.deque</code> —— 应该 &lt; 30 分钟。</p>
+<p>手动测试：</p>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> memory <span class="hljs-keyword">import</span> ShortTermMemory
+mem = ShortTermMemory(max_turns=<span class="hljs-number">3</span>)
+mem.add_turn(<span class="hljs-string">&quot;user&quot;</span>, <span class="hljs-string">&quot;hello&quot;</span>)
+mem.add_turn(<span class="hljs-string">&quot;assistant&quot;</span>, <span class="hljs-string">&quot;hi&quot;</span>)
+<span class="hljs-built_in">print</span>(mem.get_history())       <span class="hljs-comment"># [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;hello&quot;}, ...]</span>
+<span class="hljs-built_in">print</span>(mem.to_prompt_string())  <span class="hljs-comment"># User: hello\nAssistant: hi</span>
+</code></pre>
+<h3 id="步骤-32memorylong_termpy">步骤 3.2：<code>memory/long_term.py</code></h3>
+<p>在 short_term 之后实施。需要运行 Redis 实例（使用 Docker：<code>docker run -d -p 6379:6379 redis</code>）。</p>
+<p>实施说明：</p>
+<ul>
+<li>从 Redis 解码字节：<code>value.decode(&quot;utf-8&quot;) if isinstance(value, bytes) else value</code>。</li>
+<li>对结构化数据（订单上下文，配置文件）使用 <code>json.dumps</code> / <code>json.loads</code>。</li>
+<li>每次写入时总是设置 TTL 以防止无界内存增长。</li>
+</ul>
+<p>手动测试：</p>
+<pre><code class="language-python"><span class="hljs-keyword">import</span> redis
+<span class="hljs-keyword">from</span> memory <span class="hljs-keyword">import</span> LongTermMemory
+r = redis.Redis()
+mem = LongTermMemory(r, <span class="hljs-string">&quot;user_test&quot;</span>)
+mem.save_preference(<span class="hljs-string">&quot;language&quot;</span>, <span class="hljs-string">&quot;zh-CN&quot;</span>)
+<span class="hljs-built_in">print</span>(mem.get_preference(<span class="hljs-string">&quot;language&quot;</span>))  <span class="hljs-comment"># zh-CN</span>
+</code></pre>
+<hr>
+<h2 id="阶段-4--代理第-3-周">阶段 4 — 代理（第 3 周）</h2>
+<p><strong>目标</strong>：实施四个代理类。按照反依赖顺序实施：<code>ResponseAgent</code> 首先（最简单，无依赖），然后到 <code>RouterAgent</code>（最复杂）。</p>
+<h3 id="步骤-41agentsresponse_agentpy">步骤 4.1：<code>agents/response_agent.py</code></h3>
+<p>最简单的代理 —— 它只是用合成提示调用 LLM。</p>
+<p>实施步骤：</p>
+<ol>
+<li>存储 <code>self.llm</code> 并定义 <code>self.synthesis_prompt</code>（ChatPromptTemplate）。</li>
+<li>实施 <code>synthesize()</code>：
+<ul>
+<li>将 tool_results 格式化为 bullet points。</li>
+<li>将 rag_results 格式化为编号段落。</li>
+<li>检测空结果情况并在没有 LLM 调用时返回后备消息。</li>
+<li>调用 <code>self.llm.invoke(messages)</code> 并返回 <code>.content</code>。</li>
+</ul>
+</li>
+<li>实施 <code>run()</code> 作为对 <code>synthesize()</code> 的薄包装。</li>
+</ol>
+<p>用模拟 LLM 测试以验证状态键更新。</p>
+<h3 id="步骤-42agentsfaq_agentpy">步骤 4.2：<code>agents/faq_agent.py</code></h3>
+<p>在 response_agent 和检索器（阶段 2.4）之后实施。</p>
+<p>实施步骤：</p>
+<ol>
+<li>存储 <code>self.llm</code>、<code>self.retriever</code> 并定义 <code>self.prompt_template</code>。</li>
+<li>实施 <code>retrieve_context()</code> —— 调用 <code>retriever.hybrid_search()</code> 然后 <code>retriever.rerank()</code>。</li>
+<li>实施 <code>generate_answer()</code> —— 构建带编号上下文的提示，调用 LLM，处理空上下文。</li>
+<li>实施 <code>run()</code> —— 组合检索 + 生成，更新状态。</li>
+</ol>
+<p>关键：生成提示必须明确说&quot;不要包括提供的上下文中不存在的任何信息。&quot;这是 RAGAS 忠实度的主要杠杆。</p>
+<p>测试：<code>pytest tests/test_agents.py::TestFAQAgent -v</code></p>
+<h3 id="步骤-43agentsorder_agentpy">步骤 4.3：<code>agents/order_agent.py</code></h3>
+<p>最复杂的代理由于 ReAct 工具调用循环。</p>
+<p>实施步骤：</p>
+<ol>
+<li><code>__init__</code>：用 <code>llm.bind_tools(tools)</code> 绑定工具，构建 <code>tool_map</code> dict，存储 <code>max_iterations</code>。</li>
+<li><code>select_tool()</code>：首先实施规则-based 方法（意图 → 默认工具映射），然后可选添加 LLM-based 后备。</li>
+<li><code>execute_tool()</code>：在 <code>tool_map</code> 中查找工具，调用 <code>.invoke(params)</code>，将异常包装在错误 dict 中。</li>
+<li><code>run()</code>：实施 ReAct 循环。这是关键路径：
+<ul>
+<li>构建初始消息。</li>
+<li>循环直到 <code>ai_message.tool_calls</code> 为空或 <code>max_iterations</code> 达到。</li>
+<li>对于每个工具调用：提取名称和 args，调用 <code>execute_tool</code>，追加 <code>ToolMessage</code>。</li>
+<li>将所有工具结果收集到 <code>tool_results</code> 列表中。</li>
+<li>返回状态更新。</li>
+</ul>
+</li>
+</ol>
+<p>测试：<code>pytest tests/test_agents.py::TestOrderAgent -v</code></p>
+<h3 id="步骤-44agentsrouter_agentpy">步骤 4.4：<code>agents/router_agent.py</code></h3>
+<p>在代理中最后实施，因为它分派到所有其他。</p>
+<p>实施步骤：</p>
+<ol>
+<li><code>__init__</code>：存储 LLM。可选初始化 <code>self.classifier = None</code>。</li>
+<li><code>rewrite_query()</code>：写 few-shot LLM 提示。测试模糊查询如&quot;那个订单&quot;（代词解析）。</li>
+<li><code>classify_intent()</code>：从 LLM few-shot 分类开始。提示应该列出所有 IntentType 值，每个一个示例，并指示 LLM 只输出标签。</li>
+<li><code>route()</code>：组合重写 + 分类，更新状态，返回节点名称字符串。</li>
+</ol>
+<p>关键：<code>route()</code> 方法必须返回一个<strong>字符串</strong>（下一个节点名称），不是 dict。这是 LangGraph 条件路由约定。</p>
+<p>测试：<code>pytest tests/test_agents.py::TestRouterAgent -v</code></p>
+<hr>
+<h2 id="阶段-5--图第-3-周">阶段 5 — 图（第 3 周）</h2>
+<p><strong>目标</strong>：将所有代理连接成可运行的 LangGraph StateGraph。</p>
+<h3 id="步骤-51graphagent_graphpy">步骤 5.1：<code>graph/agent_graph.py</code></h3>
+<p>在所有四个代理实施后实施 <code>build_graph()</code> 和 <code>run_graph()</code>。</p>
+<p>实施步骤：</p>
+<ol>
+<li>按照 docstring 中的拓扑实施 <code>build_graph()</code>。</li>
+<li>实施 <code>run_graph()</code> 作为对 <code>compiled_graph.invoke()</code> 的薄包装。</li>
+<li>实施 <code>init_graph()</code> 以连接设置、LLM、RAG 组件和代理。</li>
+</ol>
+<p>端到端测试（项目中最重要测试）：</p>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> graph.agent_graph <span class="hljs-keyword">import</span> init_graph, run_graph
+
+<span class="hljs-comment"># 需要：运行 vLLM 服务器，运行 Milvus 与加载集合，运行 Redis</span>
+graph = init_graph()
+answer = run_graph(<span class="hljs-string">&quot;我的订单 ORD-20240310-001 到哪里了？&quot;</span>, user_id=<span class="hljs-string">&quot;user_123&quot;</span>)
+<span class="hljs-built_in">print</span>(answer)
+</code></pre>
+<p>如果这工作，核心系统是功能性的。</p>
+<hr>
+<h2 id="阶段-6--api--队列第-4-周">阶段 6 — API &amp; 队列（第 4 周）</h2>
+<h3 id="步骤-61queuemessage_queuepy">步骤 6.1：<code>queue/message_queue.py</code></h3>
+<p>在图之后实施。</p>
+<p>实施 <code>RedisQueue</code>（推送，弹出，窥视，大小）。BRPOP 模式是唯一棘手的部分 —— 在继续之前手动测试阻塞行为。</p>
+<p>跳过 <code>KafkaQueue</code> 现在除非你需要它；最后实施 <code>KafkaQueue.push()</code> 和 <code>KafkaQueue.pop()</code>。</p>
+<h3 id="步骤-62queueworkerpy">步骤 6.2：<code>queue/worker.py</code></h3>
+<p>在 <code>RedisQueue</code> 之后实施。</p>
+<p>实施步骤：</p>
+<ol>
+<li><code>__init__</code>：初始化执行器，停止事件，期货列表。</li>
+<li><code>process_message()</code>：调用代理图，测量延迟，调用 result_callback。</li>
+<li><code>start()</code>：主 BRPOP 循环与 ThreadPoolExecutor.submit()。</li>
+<li><code>stop()</code>：设置停止事件，等待期货，关闭执行器。</li>
+<li><code>start_in_background()</code>：将 <code>start()</code> 包装在守护 Thread 中。</li>
+</ol>
+<p>测试：启动工作者，推送到 Redis 的测试消息，验证它在线程中处理。</p>
+<h3 id="步骤-63apimainpy">步骤 6.3：<code>api/main.py</code></h3>
+<p>在图和队列工作后实施。</p>
+<p>实施步骤：</p>
+<ol>
+<li>实施 <code>lifespan()</code> 上下文管理器：<code>init_graph()</code>，创建 <code>RedisQueue</code>，可选启动 <code>QueueWorker</code>。</li>
+<li>实施 <code>get_compiled_graph()</code> 依赖。</li>
+<li>实施 <code>POST /chat</code> 端点：调用 <code>run_graph()</code>，构建 <code>ChatResponse</code>。</li>
+<li>实施 <code>GET /health</code> 端点。</li>
+<li>实施 <code>update_short_term_memory()</code> 后台任务。</li>
+</ol>
+<p>用 FastAPI TestClient 测试：</p>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> fastapi.testclient <span class="hljs-keyword">import</span> TestClient
+<span class="hljs-keyword">from</span> api.main <span class="hljs-keyword">import</span> app
+client = TestClient(app)
+resp = client.get(<span class="hljs-string">&quot;/health&quot;</span>)
+<span class="hljs-keyword">assert</span> resp.status_code == <span class="hljs-number">200</span>
+</code></pre>
+<hr>
+<h2 id="阶段-7--评估第-4-周">阶段 7 — 评估（第 4 周）</h2>
+<h3 id="步骤-71evaluationragas_evaluatorpy">步骤 7.1：<code>evaluation/ragas_evaluator.py</code></h3>
+<p>在 FAQ 代理工作后实施（你需要真实 RAG 输出来评估）。</p>
+<p>实施步骤：</p>
+<ol>
+<li><code>__init__</code>：用判断 LLM 配置 RAGAS 指标。</li>
+<li><code>evaluate_dataset()</code>：构建 HuggingFace Dataset，调用 <code>ragas.evaluate()</code>，解析结果。</li>
+<li><code>generate_report()</code>：格式化为 markdown 表。</li>
+</ol>
+<p>在扩展到 5 000 之前，在 50 个 FAQ 样本上运行快速评估以验证管道。</p>
+<h3 id="步骤-72evaluationoffline_evaluatorpy">步骤 7.2：<code>evaluation/offline_evaluator.py</code></h3>
+<p>在 <code>ragas_evaluator</code> 和 <code>run_graph</code> 之后实施。</p>
+<p>实施步骤：</p>
+<ol>
+<li><code>load_test_set()</code>：加载并验证 JSONL 测试集。</li>
+<li><code>run_evaluation()</code>：实施并行推理循环与 tqdm 进度条。</li>
+<li><code>compute_metrics()</code>：计算意图准确性，工具成功率，RAGAS 复合。</li>
+<li><code>save_report()</code>：将 JSON 写入 <code>data/test_set/baseline_report.json</code>。</li>
+</ol>
+<p>运行基线评估：</p>
+<pre><code class="language-bash">python -c <span class="hljs-string">&quot;
+from evaluation.offline_evaluator import OfflineEvaluator
+from graph.agent_graph import init_graph
+
+graph = init_graph()
+evaluator = OfflineEvaluator(max_workers=10)
+test_set = evaluator.load_test_set(&#x27;data/test_set/test_5000.jsonl&#x27;)
+results = evaluator.run_evaluation(graph, test_set)
+evaluator.save_report(results, &#x27;data/test_set/baseline_report.json&#x27;)
+print(results[&#x27;metrics&#x27;])
+&quot;</span>
+</code></pre>
+<p>优化前的预期基线指标：</p>
+<ul>
+<li>意图准确性：~82%</li>
+<li>工具成功率：~86%</li>
+<li>RAGAS 复合：~0.62</li>
+</ul>
+<hr>
+<h2 id="阶段-8--优化第-5-周">阶段 8 — 优化（第 5 周）</h2>
+<p><strong>目标</strong>：使用基线作为参考改进关键指标。每次更改后重新运行离线评估器以测量影响。</p>
+<h3 id="81-检索优化">8.1 检索优化</h3>
+<p>目标：Top-5 召回 71% → 88%。</p>
+<p>步骤（按优先级）：</p>
+<ol>
+<li><strong>添加混合搜索</strong>：如果只运行密集搜索，启用 BM25 并 RRF 融合。这通常添加 10+ 召回百分比点。</li>
+<li><strong>添加重排序</strong>：在混合搜索后添加 CrossEncoder 重排序器。通常添加 3–5 pp。</li>
+<li><strong>调整块大小</strong>：在 chunk_size ∈ {256, 512, 768} 上评估召回。较小块改进精确度；较大块改进多事实问题的召回。</li>
+<li><strong>调整重叠</strong>：更高重叠减少边界伪影。</li>
+<li><strong>添加元数据过滤</strong>：在 ANN 搜索前按意图类别过滤以减少噪声。</li>
+</ol>
+<h3 id="82-路由准确性优化">8.2 路由准确性优化</h3>
+<p>目标：意图准确性 82% → 93%。</p>
+<p>步骤：</p>
+<ol>
+<li><strong>改进 few-shot 示例</strong>：在分类提示中为每个意图添加 2–3 个代表性示例。</li>
+<li><strong>微调分类器</strong>：收集每个意图 500+ 个标记示例并微调 <code>bert-base-chinese</code> 分类器。用微调模型替换 LLM 分类调用以获得 10× 更低延迟。</li>
+<li><strong>添加查询重写在分类前</strong>：验证重写首先改进分类（应该，因为查询变得更明确）。</li>
+</ol>
+<h3 id="83-工具调用优化">8.3 工具调用优化</h3>
+<p>目标：工具成功率 86% → 96%。</p>
+<p>步骤：</p>
+<ol>
+<li><strong>改进工具 docstring</strong>：LLM 使用 docstring 进行工具选择。使它们更具体关于何时使用每个工具。</li>
+<li><strong>添加参数提取提示</strong>：对于订单 ID 提取，在工具调用前添加专用提取步骤。</li>
+<li><strong>添加错误恢复</strong>：当工具调用失败时，用不同参数重试而不是立即失败。</li>
+</ol>
+<h3 id="84-吞吐量优化">8.4 吞吐量优化</h3>
+<p>目标：QPS 12 → 46。</p>
+<p>步骤：</p>
+<ol>
+<li><strong>增加线程池大小</strong>：从 <code>max_workers=10</code> 开始，用负载测试测量 QPS，增加直到 LLM 服务器是瓶颈。</li>
+<li><strong>LLM 响应缓存</strong>：在 Redis 中缓存相同（重写查询，意图）对 1 小时。常见问题如&quot;退款政策&quot;每次命中相同答案。</li>
+<li><strong>批嵌入</strong>：确保嵌入器在使用全批编码（不是逐一）在 RAG 中。</li>
+<li><strong>vLLM 连续批处理</strong>：验证 LLM 服务器有动态批处理启用（vLLM 中默认）。增加 <code>--max-num-seqs</code> 用于更高批大小。</li>
+</ol>
+<hr>
+<h2 id="快速参考文件--阶段映射">快速参考：文件 → 阶段映射</h2>
+<table>
+<thead>
+<tr>
+<th>文件</th>
+<th>阶段</th>
+<th>依赖</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>config/settings.py</code></td>
+<td>1</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>services/mock_order_service.py</code></td>
+<td>1</td>
+<td>设置</td>
+</tr>
+<tr>
+<td><code>services/mock_logistics_service.py</code></td>
+<td>1</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>tools/order_tools.py</code></td>
+<td>1</td>
+<td>mock_order_service</td>
+</tr>
+<tr>
+<td><code>tools/logistics_tools.py</code></td>
+<td>1</td>
+<td>mock_logistics_service</td>
+</tr>
+<tr>
+<td><code>tools/refund_tools.py</code></td>
+<td>1</td>
+<td>mock_order_service</td>
+</tr>
+<tr>
+<td><code>tests/test_tools.py</code></td>
+<td>1</td>
+<td>工具</td>
+</tr>
+<tr>
+<td><code>rag/chunker.py</code></td>
+<td>2</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>rag/embedder.py</code></td>
+<td>2</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>rag/knowledge_base.py</code></td>
+<td>2</td>
+<td>分块器，嵌入器</td>
+</tr>
+<tr>
+<td><code>rag/retriever.py</code></td>
+<td>2</td>
+<td>knowledge_base，嵌入器</td>
+</tr>
+<tr>
+<td><code>tests/test_rag.py</code></td>
+<td>2</td>
+<td>rag/*</td>
+</tr>
+<tr>
+<td><code>memory/short_term.py</code></td>
+<td>3</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>memory/long_term.py</code></td>
+<td>3</td>
+<td>redis</td>
+</tr>
+<tr>
+<td><code>agents/response_agent.py</code></td>
+<td>4</td>
+<td>LLM</td>
+</tr>
+<tr>
+<td><code>agents/faq_agent.py</code></td>
+<td>4</td>
+<td>检索器，LLM</td>
+</tr>
+<tr>
+<td><code>agents/order_agent.py</code></td>
+<td>4</td>
+<td>工具，LLM</td>
+</tr>
+<tr>
+<td><code>agents/router_agent.py</code></td>
+<td>4</td>
+<td>LLM</td>
+</tr>
+<tr>
+<td><code>tests/test_agents.py</code></td>
+<td>4</td>
+<td>代理</td>
+</tr>
+<tr>
+<td><code>graph/agent_graph.py</code></td>
+<td>5</td>
+<td>所有代理</td>
+</tr>
+<tr>
+<td><code>queue/message_queue.py</code></td>
+<td>6</td>
+<td>redis</td>
+</tr>
+<tr>
+<td><code>queue/worker.py</code></td>
+<td>6</td>
+<td>message_queue，图</td>
+</tr>
+<tr>
+<td><code>api/main.py</code></td>
+<td>6</td>
+<td>图，队列</td>
+</tr>
+<tr>
+<td><code>evaluation/ragas_evaluator.py</code></td>
+<td>7</td>
+<td>LLM，嵌入</td>
+</tr>
+<tr>
+<td><code>evaluation/offline_evaluator.py</code></td>
+<td>7</td>
+<td>ragas_evaluator，图</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="开发环境设置">开发环境设置</h2>
+<pre><code class="language-bash"><span class="hljs-comment"># 1. 创建虚拟环境</span>
+python -m venv .venv &amp;&amp; <span class="hljs-built_in">source</span> .venv/bin/activate
+
+<span class="hljs-comment"># 2. 安装依赖</span>
+pip install -r requirements.txt
+
+<span class="hljs-comment"># 3. 启动 Milvus（独立，Docker）</span>
+docker run -d --name milvus \
+  -p 19530:19530 -p 9091:9091 \
+  milvusdb/milvus:v2.4.9 standalone
+
+<span class="hljs-comment"># 4. 启动 Redis</span>
+docker run -d --name redis -p 6379:6379 redis:7.2
+
+<span class="hljs-comment"># 5. 启动 vLLM（需要 GPU 和 ~16GB VRAM 用于 7B 模型）</span>
+vllm serve Qwen/Qwen2.5-7B-Instruct \
+  --host 0.0.0.0 --port 8000 \
+  --quantization awq
+
+<span class="hljs-comment"># 6. 复制并编辑配置</span>
+<span class="hljs-built_in">cp</span> .env.example .<span class="hljs-built_in">env</span>
+<span class="hljs-comment"># 编辑 .env 以设置 LLM_API_BASE，MILVUS_HOST，REDIS_HOST 等。</span>
+
+<span class="hljs-comment"># 7. 运行测试</span>
+pytest tests/ -v
+
+<span class="hljs-comment"># 8. 启动 API</span>
+uvicorn api.main:app --host 0.0.0.0 --port 8080 --reload
+</code></pre>
+
+            
+            
+        </body>
+        </html>

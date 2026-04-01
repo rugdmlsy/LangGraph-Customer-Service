@@ -1,0 +1,80 @@
+# =============================================================================
+# Multi-Agent E-commerce Customer Service System — Dependencies
+# =============================================================================
+# Install with:  pip install -r requirements.txt
+#
+# Python version: 3.10 or 3.11 recommended (3.12 may have torch compatibility issues)
+# GPU recommended for embedding model and local LLM inference.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Agent framework
+# -----------------------------------------------------------------------------
+langgraph==0.2.55
+langchain==0.3.13
+langchain-core==0.3.28
+langchain-community==0.3.13
+langchain-openai==0.2.14       # OpenAI-compatible client (for vLLM / Ollama)
+
+# -----------------------------------------------------------------------------
+# Vector database
+# -----------------------------------------------------------------------------
+pymilvus==2.4.9                # Milvus Python SDK (gRPC + ORM API)
+
+# -----------------------------------------------------------------------------
+# Embedding & reranking
+# -----------------------------------------------------------------------------
+sentence-transformers==3.3.1   # SentenceTransformer + CrossEncoder
+transformers==4.46.3           # HuggingFace model loading
+
+# -----------------------------------------------------------------------------
+# Deep learning backend
+# -----------------------------------------------------------------------------
+torch==2.5.1                   # PyTorch (CPU build; add +cu121 suffix for CUDA 12.1)
+# torch==2.5.1+cu121           # Uncomment for CUDA 12.1 GPU support
+
+# -----------------------------------------------------------------------------
+# BM25 sparse retrieval
+# -----------------------------------------------------------------------------
+rank-bm25==0.2.2               # BM25Okapi for keyword-based sparse search
+jieba==0.42.1                  # Chinese word segmentation for BM25 tokenisation
+
+# -----------------------------------------------------------------------------
+# Evaluation
+# -----------------------------------------------------------------------------
+ragas==0.2.6                   # RAG evaluation (faithfulness, relevance, precision)
+datasets==3.2.0                # HuggingFace datasets (used by RAGAS)
+
+# -----------------------------------------------------------------------------
+# Message queue
+# -----------------------------------------------------------------------------
+redis==5.2.1                   # Redis client (sync + async)
+kafka-python==2.0.2            # Kafka client (optional, for high-throughput deployments)
+
+# -----------------------------------------------------------------------------
+# API server
+# -----------------------------------------------------------------------------
+fastapi==0.115.6
+uvicorn[standard]==0.32.1      # ASGI server with websocket support
+httpx==0.27.2                  # Async HTTP client (used by FastAPI test client)
+
+# -----------------------------------------------------------------------------
+# Configuration & validation
+# -----------------------------------------------------------------------------
+pydantic==2.10.3
+pydantic-settings==2.6.1       # BaseSettings with .env file support
+python-dotenv==1.0.1           # Load .env variables into os.environ
+
+# -----------------------------------------------------------------------------
+# Data processing & utilities
+# -----------------------------------------------------------------------------
+numpy==1.26.4                  # Numerical arrays (compatible with torch 2.5)
+pandas==2.2.3                  # DataFrame for evaluation report generation
+tqdm==4.67.1                   # Progress bars for batch processing
+
+# -----------------------------------------------------------------------------
+# Testing
+# -----------------------------------------------------------------------------
+pytest==8.3.4
+pytest-asyncio==0.24.0         # Async test support for FastAPI endpoints
+pytest-cov==6.0.0              # Test coverage reporting
