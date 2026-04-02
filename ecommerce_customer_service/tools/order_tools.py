@@ -48,12 +48,8 @@ def get_order_status(order_id: str) -> dict:
             updated_at (str): ISO-8601 timestamp of the last status update.
             message  (str):  Human-readable status description.
         On error: {"error": str, "order_id": str}.
-
-    How to implement:
-        return _order_service.get_order_status(order_id)
     """
-    # TODO: implement
-    pass
+    return _order_service.get_order_status(order_id)
 
 
 @tool
@@ -78,9 +74,5 @@ def get_order_detail(order_id: str) -> dict:
             shipping_address (str): Delivery address.
             payment_method   (str): Payment method used.
         On error: {"error": str, "order_id": str}.
-
-    How to implement:
-        return _order_service.get_order(order_id)
     """
-    # TODO: implement
-    pass
+    return _order_service.get_order(order_id)

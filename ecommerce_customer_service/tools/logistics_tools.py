@@ -53,12 +53,8 @@ def query_logistics(order_id: str) -> dict:
             estimated_delivery(str):  Expected delivery date (YYYY-MM-DD).
             last_update       (str):  Timestamp of the most recent scan event.
         On error: {"error": str, "order_id": str}.
-
-    How to implement:
-        return _logistics_service.get_logistics(order_id)
     """
-    # TODO: implement
-    pass
+    return _logistics_service.get_logistics(order_id)
 
 
 @tool
@@ -81,9 +77,5 @@ def get_logistics_detail(tracking_number: str) -> dict:
                                      "description": str} dicts.
             status          (str):  Current shipment status.
         On error: {"error": str, "tracking_number": str}.
-
-    How to implement:
-        return _logistics_service.get_tracking(tracking_number)
     """
-    # TODO: implement
-    pass
+    return _logistics_service.get_tracking(tracking_number)

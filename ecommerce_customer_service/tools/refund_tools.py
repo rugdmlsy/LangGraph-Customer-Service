@@ -54,12 +54,8 @@ def check_refund_eligibility(order_id: str) -> dict:
             deadline   (str):  Last date by which a refund can be requested
                                (YYYY-MM-DD), or null if not eligible.
         On error: {"error": str, "order_id": str}.
-
-    How to implement:
-        return _order_service.check_refund_eligibility(order_id)
     """
-    # TODO: implement
-    pass
+    return _order_service.check_refund_eligibility(order_id)
 
 
 @tool
@@ -85,12 +81,8 @@ def create_refund(order_id: str, reason: str) -> dict:
             estimated_completion (str): Expected completion date.
             message      (str):  Confirmation message for the user.
         On error: {"error": str, "order_id": str}.
-
-    How to implement:
-        return _order_service.create_refund(order_id, reason)
     """
-    # TODO: implement
-    pass
+    return _order_service.create_refund(order_id, reason)
 
 
 @tool
@@ -115,9 +107,5 @@ def get_refund_status(refund_id: str) -> dict:
             updated_at (str):  Timestamp of the last status change.
             message    (str):  Status explanation for the user.
         On error: {"error": str, "refund_id": str}.
-
-    How to implement:
-        return _order_service.get_refund_status(refund_id)
     """
-    # TODO: implement
-    pass
+    return _order_service.get_refund_status(refund_id)

@@ -99,17 +99,21 @@ class MockOrderService:
     """
     orders: dict[str, dict] = {}
     refunds: dict[str, dict] = {}
+    status_messages = {
+        "pending":    "您的订单已提交，等待处理。",
+        "processing": "您的订单正在处理中。",
+        "shipped":    "您的订单已发货。",
+        "delivered":  "您的订单已签收。",
+        "cancelled":  "您的订单已取消。",
+        "refunded":   "您的订单退款已完成。",
+    }
 
     def __init__(self) -> None:
         """
         Initialise with seed data.
-
-        TODO:
-            - self.orders  = dict(_SEED_ORDERS)   # shallow copy of seed data
-            - self.refunds = dict(_SEED_REFUNDS)
         """
-        # TODO: implement
-        pass
+        self.orders = dict(_SEED_ORDERS)   # shallow copy of seed data
+        self.refunds = dict(_SEED_REFUNDS)
 
     def get_order(self, order_id: str) -> dict:
         """
@@ -120,16 +124,12 @@ class MockOrderService:
 
         Returns:
             Order dict, or {"error": "Order not found", "order_id": order_id}.
-
-        How to implement:
-            order = self.orders.get(order_id)
-            if not order:
-                logger.warning("Order not found: %s", order_id)
-                return {"error": "Order not found", "order_id": order_id}
-            return dict(order)
         """
-        # TODO: implement
-        pass
+        order = self.orders.get(order_id)
+        if not order:
+            logger.warning("Order not found: %s", order_id)
+            return {"error": "Order not found", "order_id": order_id}
+        return dict(order)
 
     def get_order_status(self, order_id: str) -> dict:
         """
@@ -141,28 +141,17 @@ class MockOrderService:
         Returns:
             {"order_id": str, "status": str, "updated_at": str, "message": str}
             or error dict.
-
-        How to implement:
-            order = self.get_order(order_id)
-            if "error" in order:
-                return order
-            status_messages = {
-                "pending":    "您的订单已提交，等待处理。",
-                "processing": "您的订单正在处理中。",
-                "shipped":    "您的订单已发货。",
-                "delivered":  "您的订单已签收。",
-                "cancelled":  "您的订单已取消。",
-                "refunded":   "您的订单退款已完成。",
-            }
-            return {
-                "order_id":   order_id,
-                "status":     order["status"],
-                "updated_at": order.get("delivered_at") or order["created_at"],
-                "message":    status_messages.get(order["status"], "状态未知。"),
-            }
         """
-        # TODO: implement
-        pass
+        order = self.get_order(order_id)
+        if "error" in order:
+            return order
+        updated_at = order["delivered_at"] if order["delivered_at"] else order["created_at"]
+        return {
+            "order_id":   order_id,
+            "status":     order["status"],
+            "updated_at": updated_at,
+            "message":    self.status_messages.get(order["status"], "状态未知。"),
+        }
 
     def get_orders_by_user(self, user_id: str) -> list[dict]:
         """
@@ -173,12 +162,8 @@ class MockOrderService:
 
         Returns:
             List of order dicts (may be empty if user has no orders).
-
-        How to implement:
-            return [o for o in self.orders.values() if o["user_id"] == user_id]
         """
-        # TODO: implement
-        pass
+        return [o for o in self.orders.values() if o["user_id"] == user_id]
 
     def check_refund_eligibility(self, order_id: str) -> dict:
         """
@@ -193,35 +178,43 @@ class MockOrderService:
 
         Returns:
             {"order_id": str, "eligible": bool, "reason": str, "deadline": str|None}
-
-        How to implement:
-            order = self.get_order(order_id)
-            if "error" in order:
-                return {**order, "eligible": False}
-
-            if order["status"] != "delivered":
-                return {"order_id": order_id, "eligible": False,
-                        "reason": f"订单状态为 {order['status']}，不符合退款条件。",
-                        "deadline": None}
-
-            delivered_at = datetime.fromisoformat(order["delivered_at"])
-            deadline = delivered_at + timedelta(days=7)
-            now = datetime.now()
-
-            if now > deadline:
-                return {"order_id": order_id, "eligible": False,
-                        "reason": "超过7天退款期限。", "deadline": deadline.date().isoformat()}
-
-            return {"order_id": order_id, "eligible": True,
-                    "reason": f"订单于 {delivered_at.date()} 签收，在退款期限内。",
-                    "deadline": deadline.date().isoformat()}
         """
-        # TODO: implement
-        pass
+        order = self.get_order(order_id)
+        if "error" in order:
+            return {
+                **order,
+                "eligible": False,
+                "reason": order.get("error", "订单不存在"),
+                "deadline": None,
+            }
+        if order["status"] != "delivered":
+            return {
+                "order_id": order_id,
+                "eligible": False,
+                "reason": f"订单状态为 {order['status']}，不符合退款条件。",
+                "deadline": None
+            }
+        delivered_at = datetime.fromisoformat(order["delivered_at"])
+        deadline = delivered_at + timedelta(days=7)
+        now = datetime.now()
+        if now > deadline:
+            return {
+                "order_id": order_id,
+                "eligible": False,
+                "reason": "超过7天退款期限。",
+                "deadline": deadline.date().isoformat()
+            }
+        return {
+            "order_id": order_id,
+            "eligible": True,
+            "reason": f"订单于 {delivered_at.date()} 签收，在退款期限内。",
+            "deadline": deadline.date().isoformat()
+        }
 
     def create_refund(self, order_id: str, reason: str) -> dict:
         """
         Create a new refund request for an order.
+        为内部refund字典添加一个新的退款请求，并将订单状态更新为"refunded"。
 
         Args:
             order_id: Order to refund.
@@ -229,31 +222,26 @@ class MockOrderService:
 
         Returns:
             New refund dict or error dict.
-
-        How to implement:
-            eligibility = self.check_refund_eligibility(order_id)
-            if not eligibility.get("eligible"):
-                return {"error": eligibility.get("reason", "不符合退款条件"), "order_id": order_id}
-
-            order = self.get_order(order_id)
-            refund_id = f"REF-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
-            refund = {
-                "refund_id":   refund_id,
-                "order_id":    order_id,
-                "status":      "pending_review",
-                "amount":      order["total_amount"],
-                "reason":      reason,
-                "created_at":  datetime.now().isoformat(),
-                "estimated_completion": (datetime.now() + timedelta(days=5)).date().isoformat(),
-                "message":     f"退款申请 {refund_id} 已提交，预计5个工作日内处理。",
-            }
-            self.refunds[refund_id] = refund
-            self.orders[order_id]["status"] = "refunded"
-            return refund
         """
-        # TODO: implement
-        pass
-
+        eligibility = self.check_refund_eligibility(order_id)
+        if not eligibility.get("eligible"):
+            return {"error": eligibility.get("reason", "不符合退款条件"), "order_id": order_id}
+        order = self.get_order(order_id)
+        refund_id = f"REFUND-{datetime.now().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:6].upper()}"
+        refund = {
+            "refund_id":   refund_id,
+            "order_id":    order_id,
+            "status":      "pending_review",
+            "amount":      order["total_amount"],
+            "reason":      reason,
+            "created_at":  datetime.now().isoformat(),
+            "estimated_completion": (datetime.now() + timedelta(days=5)).date().isoformat(),
+            "message":     f"退款申请 {refund_id} 已提交，预计5个工作日内处理。",
+        }
+        self.refunds[refund_id] = refund
+        self.orders[order_id]["status"] = "refunded"
+        return refund
+        
     def get_refund_status(self, refund_id: str) -> dict:
         """
         Return the current status of a refund request.
@@ -263,12 +251,8 @@ class MockOrderService:
 
         Returns:
             Refund dict or error dict.
-
-        How to implement:
-            refund = self.refunds.get(refund_id)
-            if not refund:
-                return {"error": "Refund not found", "refund_id": refund_id}
-            return dict(refund)
         """
-        # TODO: implement
-        pass
+        refund = self.refunds.get(refund_id)
+        if not refund:
+            return {"error": "Refund not found", "refund_id": refund_id}
+        return dict(refund)

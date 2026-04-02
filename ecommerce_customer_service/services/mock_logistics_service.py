@@ -78,37 +78,28 @@ class MockLogisticsService:
         logistics_db: Dict[order_id → logistics dict].
         tracking_db:  Dict[tracking_number → tracking detail dict].
     """
+    logistics_db: dict[str, dict]
+    tracking_db: dict[str, dict]
 
     def __init__(self) -> None:
         """
         Initialise with seed data.
-
-        TODO:
-            - self.logistics_db = dict(_SEED_LOGISTICS)
-            - self.tracking_db  = dict(_SEED_TRACKING)
         """
-        # TODO: implement
-        pass
+        self.logistics_db = dict(_SEED_LOGISTICS)
+        self.tracking_db = dict(_SEED_TRACKING)
 
     def get_logistics(self, order_id: str) -> dict:
         """
-        Return logistics summary for an order.
+        Return logistics record for an order.
 
         Args:
             order_id: Order identifier.
-
-        Returns:
-            Logistics dict or {"error": "Logistics not found", "order_id": order_id}.
-
-        How to implement:
-            record = self.logistics_db.get(order_id)
-            if not record:
-                logger.warning("Logistics not found for order: %s", order_id)
-                return {"error": "Logistics not found", "order_id": order_id}
-            return dict(record)
         """
-        # TODO: implement
-        pass
+        record = self.logistics_db.get(order_id)
+        if not record:
+            logger.warning("Logistics not found for order: %s", order_id)
+            return {"error": "Logistics not found", "order_id": order_id}
+        return dict(record)
 
     def get_tracking(self, tracking_number: str) -> dict:
         """
@@ -119,12 +110,9 @@ class MockLogisticsService:
 
         Returns:
             Tracking detail dict or error dict.
-
-        How to implement:
-            record = self.tracking_db.get(tracking_number)
-            if not record:
-                return {"error": "Tracking number not found", "tracking_number": tracking_number}
-            return dict(record)
         """
-        # TODO: implement
-        pass
+        record = self.tracking_db.get(tracking_number)
+        if not record:
+            logger.warning("Tracking number not found: %s", tracking_number)
+            return {"error": "Tracking number not found", "tracking_number": tracking_number}
+        return dict(record)
