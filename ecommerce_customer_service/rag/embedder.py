@@ -26,6 +26,7 @@ from typing import Union
 import numpy as np
 
 logger = logging.getLogger(__name__)
+from sentence_transformers import SentenceTransformer
 
 
 class Embedder:
@@ -43,6 +44,10 @@ class Embedder:
         vectors  = embedder.embed(["退款政策是什么？", "How to track my order?"])
         query_vec = embedder.embed_query("快递在哪？")
     """
+    model_name: str
+    model: SentenceTransformer | None
+    batch_size: int
+    device: str | None
 
     def __init__(
         self,
@@ -61,31 +66,23 @@ class Embedder:
                         - "sentence-transformers/all-MiniLM-L6-v2" (English-only, fast)
             batch_size: Encoding batch size.  Tune to fill GPU VRAM without OOM.
             device:     Torch device string.  None = auto-detect (GPU > CPU).
-
-        TODO:
-            - self.model_name = model_name
-            - self.batch_size = batch_size
-            - Detect device: torch.cuda.is_available() → "cuda" else "cpu".
-            - self.model = None  (lazy load — avoids GPU memory waste at import).
         """
-        # TODO: implement
-        pass
+        self.model_name = model_name
+        self.batch_size = batch_size
+        self.device = device
+        self.model = None  # Lazy-loaded on first encode request
 
     def _load_model(self) -> None:
         """
         Load the SentenceTransformer model into memory.
 
         Called automatically on first encode request.
-
-        TODO:
-            - from sentence_transformers import SentenceTransformer
-            - self.model = SentenceTransformer(self.model_name, device=self.device)
-            - Log model name and device at INFO level.
-            - Optionally half-precision: model.half() on GPU for 2× memory savings
-              (ensure the Milvus index metric is compatible with float16).
         """
-        # TODO: implement
-        pass
+        if self.model is not None:
+            return  # Model already loaded
+        self.model = SentenceTransformer(self.model_name, device=self.device)
+        logger.info(f"Loaded embedder model '{self.model_name}' on device '{self.model.device}'")
+        # Optional: self.model.half() if using GPU and compatible with Milvus index metric
 
     def embed(self, texts: list[str]) -> list[list[float]]:
         """
@@ -98,23 +95,28 @@ class Embedder:
             List of embedding vectors, one per input text.
             Each vector is a list of floats of length == model embedding dim
             (e.g. 384 for MiniLM-L12-v2).
-
-        How to implement:
-            1. if self.model is None: self._load_model()
-            2. vectors = self.model.encode(
-                   texts,
-                   batch_size=self.batch_size,
-                   normalize_embeddings=True,
-                   show_progress_bar=len(texts) > 100,
-               )
-            3. Return vectors.tolist()  (numpy → plain Python lists for JSON serializability).
-
-        Error handling:
-            - If texts is empty, return [].
-            - Catch RuntimeError (CUDA OOM) and retry with batch_size // 2.
         """
-        # TODO: implement
-        pass
+        if not texts:
+            return []
+        if self.model is None:
+            self._load_model()
+        try:
+            assert self.model is not None  # For type checker
+            vectors = self.model.encode(
+                texts,
+                batch_size=self.batch_size,
+                normalize_embeddings=True,
+                show_progress_bar=len(texts) > 100,
+            )
+            return vectors.tolist()
+        except RuntimeError as e:
+            if "CUDA out of memory" in str(e) and self.batch_size > 1:
+                logger.warning(f"CUDA OOM with batch_size={self.batch_size}, retrying with smaller batch size")
+                self.batch_size //= 2
+                return self.embed(texts)  # Retry with smaller batch size
+            else:
+                logger.error(f"Error during embedding: {e}")
+                raise
 
     def embed_query(self, query: str) -> list[float]:
         """
@@ -123,19 +125,12 @@ class Embedder:
         Args:
             query: Query text (typically the rewritten user query).
 
-        Returns:
-            Single embedding vector as a list of floats.
-
-        How to implement:
-            Thin wrapper: return self.embed([query])[0]
-
         Note:
             Some asymmetric models (e.g. BGE) require a query prefix like
             "Represent this sentence: " for query-side encoding.  Check the
             model card and add the prefix here if needed.
         """
-        # TODO: implement
-        pass
+        return self.embed([query])[0]
 
     @property
     def embedding_dim(self) -> int:
@@ -148,5 +143,9 @@ class Embedder:
             if self.model is None: self._load_model()
             return self.model.get_sentence_embedding_dimension()
         """
-        # TODO: implement
-        pass
+        if self.model is None:
+            self._load_model()
+        assert self.model is not None  # For type checker
+        dim = self.model.get_sentence_embedding_dimension()
+        assert dim is not None
+        return dim

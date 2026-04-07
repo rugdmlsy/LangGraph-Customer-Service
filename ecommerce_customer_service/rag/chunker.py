@@ -22,6 +22,8 @@ Why character-based rather than token-based?
 from __future__ import annotations
 
 import logging
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.document_loaders import TextLoader
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +41,9 @@ class SlidingWindowChunker:
         chunks  = chunker.chunk("很长的商品描述文本 ...")
         # → ["第1段...", "第2段...（前100字与第1段相同）", ...]
     """
+    chunk_size: int
+    overlap: int
+    mode: str 
 
     def __init__(self, chunk_size: int = 512, overlap: int = 100) -> None:
         """
@@ -48,15 +53,12 @@ class SlidingWindowChunker:
             chunk_size: Number of characters per chunk.  Must be > overlap.
             overlap:    Overlap in characters between consecutive chunks.
                         Controls context continuity at chunk boundaries.
-
-        TODO:
-            - Validate chunk_size > overlap > 0; raise ValueError otherwise.
-            - Store as self.chunk_size and self.overlap.
-            - Optionally support token-based chunking via a `mode` parameter
-              ("char" | "token"); load tokeniser lazily if mode == "token".
         """
-        # TODO: implement
-        pass
+        if chunk_size <= overlap:
+            raise ValueError("chunk_size must be greater than overlap")
+        self.chunk_size = chunk_size
+        self.overlap = overlap
+        self.mode = "char"  # For now, only character-based chunking is implemented
 
     def chunk(self, text: str) -> list[str]:
         """
@@ -70,16 +72,6 @@ class SlidingWindowChunker:
             List of chunk strings.  Empty list if text is empty or whitespace.
             Each chunk has at most `chunk_size` characters.
 
-        How to implement:
-            1. Strip leading/trailing whitespace from `text`.
-            2. If len(text) <= chunk_size, return [text].
-            3. stride = chunk_size - overlap
-            4. Loop i in range(0, len(text), stride):
-               chunk = text[i : i + chunk_size]
-               if chunk.strip():
-                   chunks.append(chunk)
-            5. Return chunks.
-
         Optimisation for CJK text:
             Before the loop, split on sentence-ending punctuation
             (。！？\n) to avoid cutting mid-sentence.  Then greedily
@@ -92,8 +84,24 @@ class SlidingWindowChunker:
             for throughput (vectorised string ops) matters more than
             latency.  For very large corpora, consider multiprocessing.
         """
-        # TODO: implement
-        pass
+        text_splitter = RecursiveCharacterTextSplitter(
+            separators=[
+                "\n\n",
+                "\n",
+                " ",
+                ".",
+                ",",
+                "\u200b",  # Zero-width space
+                "\uff0c",  # Fullwidth comma
+                "\u3001",  # Ideographic comma
+                "\uff0e",  # Fullwidth full stop
+                "\u3002",  # Ideographic stop
+                "",
+            ],
+            chunk_size=self.chunk_size, chunk_overlap=self.overlap,
+        )
+        chunks = text_splitter.split_text(text)
+        return chunks
 
     def chunk_with_metadata(self, text: str, source: str) -> list[dict]:
         """
@@ -106,12 +114,8 @@ class SlidingWindowChunker:
         Returns:
             List of dicts: [{"text": str, "chunk_id": int, "source": str}, ...]
 
-        How to implement:
-            1. chunks = self.chunk(text)
-            2. Return [{"text": c, "chunk_id": i, "source": source}
-                       for i, c in enumerate(chunks)]
-
         This method is a convenience wrapper used by KnowledgeBase.load_from_file().
         """
-        # TODO: implement
-        pass
+        chunks = self.chunk(text)
+        return [{"text": c, "chunk_id": i, "source": source} 
+                for i, c in enumerate(chunks)]

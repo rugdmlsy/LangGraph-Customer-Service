@@ -10,4 +10,5 @@ wheels/
 .venv
 
 doc
+*/.env
 .env

@@ -23,6 +23,12 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 from typing import Any
+from pymilvus import connections
+from pymilvus import CollectionSchema, FieldSchema, DataType, Collection
+from pymilvus import utility
+from rag.chunker import SlidingWindowChunker
+from rag.embedder import Embedder
+import fitz, time
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +49,7 @@ class KnowledgeBase:
         kb = KnowledgeBase(embedder, chunker)
         kb.connect()
         kb.create_collection("ecommerce_faq", dim=384)
-        kb.load_from_file("data/raw/faq.jsonl")
+        kb.load_from_file("data/raw/faq.txt")
         kb.build_index()
 
     Typical usage (query) — called by Retriever:
@@ -53,8 +59,8 @@ class KnowledgeBase:
 
     def __init__(
         self,
-        embedder: Any,
-        chunker: Any,
+        embedder: Embedder,
+        chunker: SlidingWindowChunker,
         host: str = "localhost",
         port: int = 19530,
         collection_name: str = "ecommerce_faq",
@@ -68,28 +74,23 @@ class KnowledgeBase:
             host:            Milvus host (override with settings.MILVUS_HOST).
             port:            Milvus port.
             collection_name: Name of the Milvus collection to operate on.
-
-        TODO:
-            - Store all args as instance attributes.
-            - self.collection = None (set after connect()).
         """
-        # TODO: implement
-        pass
+        self.embedder = embedder
+        self.chunker = chunker
+        self.host = host
+        self.port = port
+        self.collection_name = collection_name
+        self.collection = None  # Set after connect()
 
     def connect(self) -> None:
         """
         Establish connection to the Milvus server.
 
-        How to implement:
-            from pymilvus import connections
-            connections.connect(alias="default", host=self.host, port=self.port)
-            logger.info("Connected to Milvus at %s:%s", self.host, self.port)
-
         Call this once at application startup (e.g. in FastAPI lifespan event).
         Subsequent calls are safe (idempotent in pymilvus >= 2.3).
         """
-        # TODO: implement
-        pass
+        connections.connect(alias="default", host=self.host, port=self.port)
+        logger.info("Connected to Milvus at %s:%s", self.host, self.port)
 
     def create_collection(self, name: str, dim: int) -> None:
         """
@@ -105,29 +106,22 @@ class KnowledgeBase:
         Args:
             name: Collection name (stored as self.collection_name).
             dim:  Embedding dimensionality (must match embedder output).
-
-        How to implement:
-            from pymilvus import CollectionSchema, FieldSchema, DataType, Collection
-            fields = [
-                FieldSchema("id",        DataType.INT64,         is_primary=True, auto_id=True),
-                FieldSchema("text",      DataType.VARCHAR,        max_length=4096),
-                FieldSchema("source",    DataType.VARCHAR,        max_length=512),
-                FieldSchema("chunk_id",  DataType.INT64),
-                FieldSchema("embedding", DataType.FLOAT_VECTOR,   dim=dim),
-            ]
-            schema = CollectionSchema(fields, description="E-commerce FAQ knowledge base")
-            self.collection = Collection(name=name, schema=schema)
-            logger.info("Created collection '%s' with dim=%d", name, dim)
-
-        If the collection already exists, load it instead of recreating:
-            from pymilvus import utility
-            if utility.has_collection(name):
-                self.collection = Collection(name)
-                self.collection.load()
-                return
         """
-        # TODO: implement
-        pass
+        if utility.has_collection(name):
+            self.collection = Collection(name)
+            self.collection.load()
+            logger.info("Loaded existing collection '%s'", name)
+            return
+        fields = [
+            FieldSchema("id",        DataType.INT64,         is_primary=True, auto_id=True),
+            FieldSchema("text",      DataType.VARCHAR,        max_length=4096),
+            FieldSchema("source",    DataType.VARCHAR,        max_length=512),
+            FieldSchema("chunk_id",  DataType.INT64),
+            FieldSchema("embedding", DataType.FLOAT_VECTOR,   dim=dim),
+        ]
+        schema = CollectionSchema(fields)
+        self.collection = Collection(name=name, schema=schema)
+        logger.info("Created collection '%s' with dim=%d", name, dim)
 
     def insert(
         self,
@@ -145,23 +139,21 @@ class KnowledgeBase:
 
         Returns:
             List of auto-assigned Milvus primary key IDs.
-
-        How to implement:
-            data = [
-                texts,
-                [m["source"]   for m in metadata],
-                [m["chunk_id"] for m in metadata],
-                embeddings,
-            ]
-            mr = self.collection.insert(data)
-            self.collection.flush()   # ensure data is persisted to segment
-            return mr.primary_keys
-
+            
         Batch insert tip: for large corpora, call insert() in batches of
         ~1 000 chunks to avoid gRPC message size limits and OOM errors.
         """
-        # TODO: implement
-        pass
+        data = [
+            texts,
+            [m["source"]   for m in metadata],
+            [m["chunk_id"] for m in metadata],
+            embeddings,
+        ]
+        if self.collection is None:
+            self.collection = Collection(self.collection_name)  # lazy load if not connected
+        mr = self.collection.insert(data)
+        self.collection.flush()   # ensure data is persisted to segment
+        return mr.primary_keys
 
     def build_index(self) -> None:
         """
@@ -169,25 +161,21 @@ class KnowledgeBase:
 
         Must be called after all data is inserted and before collection.search().
 
-        How to implement:
-            index_params = {
-                "metric_type": "COSINE",
-                "index_type":  "HNSW",
-                "params": {"M": 16, "efConstruction": 200},
-            }
-            self.collection.create_index(field_name="embedding",
-                                         index_params=index_params)
-            self.collection.load()   # load into memory for search
-            logger.info("Index built and collection loaded into memory.")
-
         HNSW tuning:
             M (graph edges per node): higher → better recall, more memory.
             efConstruction: higher → better index quality, slower build.
             Recommended: M=16, efConstruction=200 for production;
             M=8, efConstruction=64 for fast prototyping.
         """
-        # TODO: implement
-        pass
+        index_params = {
+            "metric_type": "COSINE",
+            "index_type":  "HNSW",
+            "params": {"M": 16, "efConstruction": 200},
+        }
+        assert self.collection is not None
+        self.collection.create_index(field_name="embedding", index_params=index_params)
+        self.collection.load()
+        logger.info("Index built and collection loaded into memory.")
 
     def load_from_file(self, file_path: str | Path) -> int:
         """
@@ -195,47 +183,48 @@ class KnowledgeBase:
 
         Supports file formats:
             .txt   — plain text, one document per file
-            .jsonl — one JSON object per line with "text" and "source" keys
-            .json  — list of {"text": str, "source": str} objects
+            .pdf   — PDF documents (requires pdfplumber dependency)
+            to be extended:
+                .jsonl — one JSON object per line with "text" and "source" keys
+                .json  — list of {"text": str, "source": str} objects
 
         Args:
             file_path: Path to the input file.
 
         Returns:
             Total number of chunks inserted.
-
-        How to implement:
-            1. Read and parse the file based on extension.
-            2. For each document:
-               a. chunks_with_meta = self.chunker.chunk_with_metadata(doc["text"],
-                                                                       doc["source"])
-               b. texts      = [c["text"]     for c in chunks_with_meta]
-               c. meta       = [{"source": c["source"], "chunk_id": c["chunk_id"]}
-                                for c in chunks_with_meta]
-               d. embeddings = self.embedder.embed(texts)  ← batch encode
-               e. self.insert(texts, embeddings, meta)
-            3. Use tqdm progress bar for large files.
-            4. Return total inserted count.
-            5. Log statistics: num docs, num chunks, elapsed time.
-
-        Data format tip:
-            Prepare FAQ data as JSONL with fields: text, source, category.
-            The "category" field can be stored as a VARCHAR scalar field and
-            used for metadata filtering during search (narrowing to product
-            category before ANN search).
         """
-        # TODO: implement
-        pass
+        file = Path(file_path)
+        if not file.exists():
+            logger.error("File not found: %s", file_path)
+            raise FileNotFoundError(f"File not found: {file_path}")
+        start = time.perf_counter()
+        if file.suffix == ".pdf":
+            with fitz.open(file) as doc:
+                rawtexts = []
+                for page in doc:
+                    rawtexts.append(page.get_text())
+                full_text = "\n".join(rawtexts)
+        elif file.suffix == ".txt":
+            with open(file, "r") as f:
+                full_text = f.read()
+        else:
+            logger.error("Unsupported file format: %s", file.suffix)
+            raise ValueError(f"Unsupported file format: {file.suffix}")
+        chunks_with_meta = self.chunker.chunk_with_metadata(full_text, str(file))
+        texts = [c["text"] for c in chunks_with_meta]
+        meta = [{"source": c["source"], "chunk_id": c["chunk_id"]} for c in chunks_with_meta]
+        embeddings = self.embedder.embed(texts)
+        self.insert(texts, embeddings, meta)
+        elapsed = time.perf_counter() - start
+        logger.info("Ingested %d chunks from file '%s', elapsed: %.2f seconds",
+                    len(chunks_with_meta), file_path, elapsed)
+        return len(chunks_with_meta)    
 
     def drop_collection(self) -> None:
         """
         Drop the collection from Milvus.  Use with caution — data is lost.
-
-        How to implement:
-            from pymilvus import utility
-            utility.drop_collection(self.collection_name)
-            self.collection = None
-            logger.warning("Dropped collection '%s'", self.collection_name)
         """
-        # TODO: implement
-        pass
+        utility.drop_collection(self.collection_name)
+        self.collection = None
+        logger.warning("Dropped collection '%s'", self.collection_name)

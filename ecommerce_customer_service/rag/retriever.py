@@ -29,6 +29,8 @@ from __future__ import annotations
 
 import logging
 from typing import Any
+import jieba
+from rank_bm25 import BM25Okapi
 
 logger = logging.getLogger(__name__)
 
@@ -61,15 +63,14 @@ class Retriever:
             embedder:            Embedder instance.
             reranker_model_name: HuggingFace cross-encoder model ID.
             rrf_k:               RRF smoothing constant.
-
-        TODO:
-            - Store all args as instance attributes.
-            - self.bm25_index = None  (built lazily or explicitly via build_bm25()).
-            - self.corpus_texts = []
-            - self.reranker = None  (load lazily on first rerank() call).
         """
-        # TODO: implement
-        pass
+        self.knowledge_base = knowledge_base
+        self.embedder = embedder
+        self.reranker_model_name = reranker_model_name
+        self.rrf_k = rrf_k
+        self.bm25_index = None
+        self.corpus_texts = []
+        self.reranker = None
 
     def build_bm25(self, corpus_texts: list[str]) -> None:
         """
@@ -80,20 +81,15 @@ class Retriever:
         Args:
             corpus_texts: All chunk texts in the same order as Milvus IDs.
 
-        How to implement:
-            from rank_bm25 import BM25Okapi
-            import jieba  # Chinese tokenisation
-            tokenized = [list(jieba.cut(t)) for t in corpus_texts]
-            self.bm25_index = BM25Okapi(tokenized)
-            self.corpus_texts = corpus_texts
-            logger.info("BM25 index built on %d documents", len(corpus_texts))
-
         Note: jieba is needed for Chinese word segmentation.
         For mixed Chinese/English, segment only Chinese characters and
         split English tokens by whitespace/punctuation.
         """
-        # TODO: implement
-        pass
+        tokenized = [list(jieba.cut(t)) for t in corpus_texts]
+        self.bm25_index = BM25Okapi(tokenized)
+        self.corpus_texts = corpus_texts
+        logger.info("BM25 index built on %d documents", len(corpus_texts))
+
 
     def dense_search(self, query_vec: list[float], top_k: int = 10) -> list[dict]:
         """
@@ -108,31 +104,26 @@ class Retriever:
             [{"id": int, "text": str, "source": str, "score": float}, ...]
             sorted by descending score (cosine similarity).
 
-        How to implement:
-            search_params = {"metric_type": "COSINE", "params": {"ef": 64}}
-            results = self.knowledge_base.collection.search(
-                data=[query_vec],
-                anns_field="embedding",
-                param=search_params,
-                limit=top_k,
-                output_fields=["text", "source", "chunk_id"],
-            )
-            # results[0] is the hits for the first query vector
-            return [
-                {
-                    "id":     hit.id,
-                    "text":   hit.entity.get("text"),
-                    "source": hit.entity.get("source"),
-                    "score":  hit.score,
-                }
-                for hit in results[0]
-            ]
-
         Tuning: increase `ef` (HNSW search-time parameter) for higher recall
         at the cost of latency.  ef=64 is a good default; ef=128 for ≥95% recall.
         """
-        # TODO: implement
-        pass
+        search_params = {"metric_type": "COSINE", "params": {"ef": 64}}
+        results = self.knowledge_base.collection.search(
+            data=[query_vec],
+            anns_field="embedding",
+            param=search_params,
+            limit=top_k,
+            output_fields=["text", "source", "chunk_id"],
+        )
+        return [
+            {
+                "id":     hit.id,
+                "text":   hit.entity.get("text"),
+                "source": hit.entity.get("source"),
+                "score":  hit.score,
+            }
+            for hit in results[0]
+        ]
 
     def sparse_search(self, query: str, top_k: int = 10) -> list[dict]:
         """
@@ -145,27 +136,22 @@ class Retriever:
         Returns:
             List of document dicts with "score" = BM25 score (higher = more relevant).
 
-        How to implement:
-            import jieba
-            query_tokens = list(jieba.cut(query))
-            scores = self.bm25_index.get_scores(query_tokens)
-            # Top-k indices by descending BM25 score
-            top_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:top_k]
-            return [
-                {
-                    "id":    top_indices[i],
-                    "text":  self.corpus_texts[top_indices[i]],
-                    "score": float(scores[top_indices[i]]),
-                }
-                for i in range(len(top_indices))
-            ]
-
         Note: BM25 IDs here are array indices into corpus_texts.  Ensure
         corpus_texts is in the same order as the Milvus auto-ID sequence,
         or maintain an id→text mapping dict for reliable lookup.
         """
-        # TODO: implement
-        pass
+        query_tokens = list(jieba.cut(query))
+        assert self.bm25_index is not None, "BM25 index not built. Call build_bm25() first."
+        scores = self.bm25_index.get_scores(query_tokens)
+        top_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:top_k]
+        return [
+            {
+                "id":    top_indices[i],
+                "text":  self.corpus_texts[top_indices[i]],
+                "score": float(scores[top_indices[i]]),
+            }
+            for i in range(len(top_indices))
+        ]
 
     def hybrid_search(self, query: str, top_k: int = 10) -> list[dict]:
         """
@@ -195,10 +181,32 @@ class Retriever:
         Alternative: use Milvus 2.4 native hybrid search with WeightedRanker
         or RRFRanker for server-side fusion (lower network overhead).
         """
-        # TODO: implement
-        pass
+        query_vec = self.embedder.embed_query(query)
+        dense_docs  = self.dense_search(query_vec, top_k=top_k * 2)
+        sparse_docs = self.sparse_search(query, top_k=top_k * 2)
+        score_map = {}
+        doc_map = {}  # Map doc_id -> doc for text lookup
+        for rank, doc in enumerate(dense_docs):
+            doc_id = doc["id"]
+            score_map[doc_id] = score_map.get(doc_id, 0) + 1 / (self.rrf_k + rank + 1)
+            if doc_id not in doc_map:
+                doc_map[doc_id] = doc
+        for rank, doc in enumerate(sparse_docs):
+            doc_id = doc["id"]
+            score_map[doc_id] = score_map.get(doc_id, 0) + 1 / (self.rrf_k + rank + 1)
+            if doc_id not in doc_map:
+                doc_map[doc_id] = doc
+        fused_docs = sorted(score_map.items(), key=lambda x: x[1], reverse=True)[:top_k]
+        return [
+            {
+                "id": doc_id,
+                "text": doc_map.get(doc_id, {}).get("text", ""),
+                "score": score_map[doc_id],
+            }
+            for doc_id, _ in fused_docs
+        ]
 
-    def rerank(self, query: str, docs: list[dict], top_n: int = 3) -> list[dict]:
+    def rerank(self, query: str, docs: list[dict], top_n: int = 3, method: str = "Cross-Encoder") -> list[dict]:
         """
         Rerank candidate documents using a cross-encoder model.
 
@@ -206,6 +214,8 @@ class Retriever:
             query:  User query (the rewritten version for best results).
             docs:   Candidate documents from hybrid_search().
             top_n:  Number of documents to return after reranking.
+            method: Reranking method to use. Defaults to "Cross-Encoder". 
+                Candidates: RRF, RankLLM, Cross-Encoder, ColBERT
 
         Returns:
             Top-n documents, re-sorted by cross-encoder relevance score.
@@ -226,5 +236,15 @@ class Retriever:
             reranker input at ≤ 20 candidates (from hybrid_search top-20)
             to stay under 200 ms total retrieval latency on CPU.
         """
-        # TODO: implement
-        pass
+        if method == "Cross-Encoder":
+            if self.reranker is None:
+                from sentence_transformers import CrossEncoder
+                self.reranker = CrossEncoder(self.reranker_model_name)
+            pairs = [(query, doc["text"]) for doc in docs]
+            scores = self.reranker.predict(pairs)
+            for doc, score in zip(docs, scores):
+                doc["rerank_score"] = float(score)
+            reranked_docs = sorted(docs, key=lambda d: d["rerank_score"], reverse=True)[:top_n]
+            return reranked_docs
+        else:
+            raise NotImplementedError(f"Reranking method '{method}' not implemented.")
