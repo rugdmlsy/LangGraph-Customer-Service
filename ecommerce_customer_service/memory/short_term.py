@@ -48,13 +48,9 @@ class ShortTermMemory:
             max_turns: Maximum number of individual messages (not turn pairs)
                        stored in the buffer.  With max_turns=10 you store
                        up to 10 messages (5 user + 5 assistant).
-
-        TODO:
-            - self.max_turns = max_turns
-            - self._history: deque[dict] = deque(maxlen=max_turns)
         """
-        # TODO: implement
-        pass
+        self.max_turns = max_turns 
+        self._history: deque[dict] = deque(maxlen=max_turns)
 
     def add_turn(self, role: str, content: str) -> None:
         """
@@ -64,14 +60,10 @@ class ShortTermMemory:
             role:    "user" or "assistant" (OpenAI-compatible roles).
             content: The text of the message.
 
-        How to implement:
-            self._history.append({"role": role, "content": content})
-
         Note: the deque automatically evicts the oldest message when maxlen
         is exceeded, so no explicit eviction logic is needed.
         """
-        # TODO: implement
-        pass
+        self._history.append({"role": role, "content": content})
 
     def get_history(self) -> list[dict]:
         """
@@ -80,12 +72,8 @@ class ShortTermMemory:
         Returns:
             List of {"role": str, "content": str} dicts in chronological order.
             Returns an empty list if no turns have been added yet.
-
-        How to implement:
-            return list(self._history)
         """
-        # TODO: implement
-        pass
+        return list(self._history)
 
     def clear(self) -> None:
         """
@@ -93,12 +81,8 @@ class ShortTermMemory:
 
         Call this at the start of a new session or when the user explicitly
         resets the conversation.
-
-        How to implement:
-            self._history.clear()
         """
-        # TODO: implement
-        pass
+        self._history.clear()
 
     def to_prompt_string(self) -> str:
         """
@@ -117,13 +101,15 @@ class ShortTermMemory:
                 lines.append(f"{role_label}: {turn['content']}")
             return "\n".join(lines)
         """
-        # TODO: implement
-        pass
+        lines = []
+        for turn in self._history:
+            role_label = "User" if turn["role"] == "user" else "Assistant"
+            lines.append(f"{role_label}: {turn['content']}")
+        return "\n".join(lines)
 
     def __len__(self) -> int:
         """Return number of messages currently stored."""
-        # TODO: implement
-        pass
+        return len(self._history)
 
     def last_user_message(self) -> str | None:
         """
@@ -131,12 +117,8 @@ class ShortTermMemory:
 
         Returns:
             Content string, or None if history is empty or has no user turns.
-
-        How to implement:
-            for turn in reversed(self._history):
-                if turn["role"] == "user":
-                    return turn["content"]
-            return None
         """
-        # TODO: implement
-        pass
+        for turn in reversed(self._history):
+            if turn["role"] == "user":
+                return turn["content"]
+        return None

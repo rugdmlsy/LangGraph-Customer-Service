@@ -184,8 +184,8 @@ async def lifespan(app: FastAPI):
     How to implement:
         from config import settings
         from graph.agent_graph import init_graph
-        from queue.message_queue import RedisQueue
-        from queue.worker import QueueWorker
+        from message_queue.message_queue import RedisQueue
+        from message_queue.worker import QueueWorker
         import redis
 
         # Startup

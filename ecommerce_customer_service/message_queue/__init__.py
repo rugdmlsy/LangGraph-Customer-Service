@@ -18,7 +18,7 @@ Architecture pattern:
         - Easy horizontal scaling: add more QueueWorker processes as load increases.
 """
 
-from queue.message_queue import MessageQueue, RedisQueue
-from queue.worker import QueueWorker
+from message_queue.message_queue import MessageQueue, RedisQueue
+from message_queue.worker import QueueWorker
 
 __all__ = ["MessageQueue", "RedisQueue", "QueueWorker"]

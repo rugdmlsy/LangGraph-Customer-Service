@@ -64,16 +64,12 @@ class LongTermMemory:
             user_id:      Unique, stable user identifier (e.g. platform UID).
             ttl:          TTL in seconds for preference and profile keys.
                           Default: 30 days.
-
-        TODO:
-            - self.redis = redis_client
-            - self.user_id = user_id
-            - self.ttl = ttl
-            - self._pref_key  = f"user:{user_id}:preferences"
-            - self._profile_key = f"user:{user_id}:profile"
         """
-        # TODO: implement
-        pass
+        self.redis = redis_client
+        self.user_id = user_id
+        self.ttl = ttl
+        self._pref_key = f"user:{user_id}:preferences"
+        self._profile_key = f"user:{user_id}:profile"
 
     # ---------------------------------------------------------------------- #
     # Preferences                                                             #
@@ -86,13 +82,9 @@ class LongTermMemory:
         Args:
             key:   Preference name (e.g. "language", "contact_channel").
             value: Preference value as a string.
-
-        How to implement:
-            self.redis.hset(self._pref_key, key, value)
-            self.redis.expire(self._pref_key, self.ttl)
         """
-        # TODO: implement
-        pass
+        self.redis.hset(self._pref_key, key, value)
+        self.redis.expire(self._pref_key, self.ttl)
 
     def get_preference(self, key: str, default: str = "") -> str:
         """
@@ -104,26 +96,18 @@ class LongTermMemory:
 
         Returns:
             Stored preference string, or `default` if not found.
-
-        How to implement:
-            value = self.redis.hget(self._pref_key, key)
-            if value is None:
-                return default
-            return value.decode("utf-8") if isinstance(value, bytes) else value
         """
-        # TODO: implement
-        pass
+        value = self.redis.hget(self._pref_key, key)
+        if value is None:
+            return default
+        return value.decode("utf-8") if isinstance(value, bytes) else value
 
     def get_all_preferences(self) -> dict[str, str]:
         """
         Return all preferences for the user as a dict.
-
-        How to implement:
-            raw = self.redis.hgetall(self._pref_key)
-            return {k.decode(): v.decode() for k, v in raw.items()}
         """
-        # TODO: implement
-        pass
+        raw = self.redis.hgetall(self._pref_key)
+        return {k.decode(): v.decode() for k, v in raw.items()}
 
     # ---------------------------------------------------------------------- #
     # Order context                                                           #
@@ -140,13 +124,9 @@ class LongTermMemory:
             order_id: Order identifier string.
             context:  Dict with relevant order info
                       (status, amount, creation_date, etc.).
-
-        How to implement:
-            key = f"user:{self.user_id}:order:{order_id}"
-            self.redis.set(key, json.dumps(context), ex=self.ttl)
         """
-        # TODO: implement
-        pass
+        key = f"user:{self.user_id}:order:{order_id}"
+        self.redis.set(key, json.dumps(context), ex=self.ttl)
 
     def get_order_context(self, order_id: str) -> dict:
         """
@@ -157,14 +137,10 @@ class LongTermMemory:
 
         Returns:
             Context dict, or empty dict if not found.
-
-        How to implement:
-            key = f"user:{self.user_id}:order:{order_id}"
-            raw = self.redis.get(key)
-            return json.loads(raw) if raw else {}
         """
-        # TODO: implement
-        pass
+        key = f"user:{self.user_id}:order:{order_id}"
+        raw = self.redis.get(key)
+        return json.loads(raw) if raw else {}
 
     # ---------------------------------------------------------------------- #
     # User profile                                                            #
@@ -176,12 +152,8 @@ class LongTermMemory:
 
         Args:
             profile: Dict with profile fields.
-
-        How to implement:
-            self.redis.set(self._profile_key, json.dumps(profile), ex=self.ttl)
         """
-        # TODO: implement
-        pass
+        self.redis.set(self._profile_key, json.dumps(profile), ex=self.ttl)
 
     def get_user_profile(self) -> dict:
         """
@@ -189,10 +161,6 @@ class LongTermMemory:
 
         Returns:
             Profile dict, or empty dict if not set.
-
-        How to implement:
-            raw = self.redis.get(self._profile_key)
-            return json.loads(raw) if raw else {}
         """
-        # TODO: implement
-        pass
+        raw = self.redis.get(self._profile_key)
+        return json.loads(raw) if raw else {}
