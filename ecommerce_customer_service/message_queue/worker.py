@@ -28,6 +28,7 @@ from __future__ import annotations
 import logging
 import signal
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor, Future
 from typing import Any, Callable
 
@@ -69,18 +70,14 @@ class QueueWorker:
             result_callback: Optional hook called with (request_id, result) after
                              each message is processed.  Use to push results to
                              Redis pub/sub so the API layer can return responses.
-
-        TODO:
-            - self.queue           = queue
-            - self.agent_graph     = agent_graph
-            - self.max_workers     = max_workers
-            - self.result_callback = result_callback
-            - self.executor        = ThreadPoolExecutor(max_workers=max_workers)
-            - self._stop_event     = threading.Event()
-            - self._futures: list[Future] = []   # track in-flight futures for clean shutdown
         """
-        # TODO: implement
-        pass
+        self.queue = queue
+        self.agent_graph = agent_graph
+        self.max_workers = max_workers
+        self.result_callback = result_callback
+        self.executor = ThreadPoolExecutor(max_workers=max_workers)
+        self._stop_event = threading.Event()
+        self._futures: list[Future] = []
 
     def process_message(self, message: dict) -> dict:
         """
@@ -94,35 +91,30 @@ class QueueWorker:
         Returns:
             Result dict from the agent graph:
             {"request_id": str, "answer": str, "intent": str, "latency_ms": float}
-
-        How to implement:
-            import time
-            start = time.monotonic()
-            try:
-                result = self.agent_graph(message)
-                result["request_id"] = message.get("request_id", "")
-                result["latency_ms"] = (time.monotonic() - start) * 1000
-                logger.info(
-                    "Processed request_id=%s in %.1f ms",
-                    result["request_id"], result["latency_ms"]
-                )
-                if self.result_callback:
-                    self.result_callback(result["request_id"], result)
-                return result
-            except Exception as exc:
-                logger.exception("Error processing message %s", message.get("request_id"))
-                error_result = {
-                    "request_id": message.get("request_id", ""),
-                    "error":      str(exc),
-                    "answer":     "抱歉，系统处理您的请求时发生错误，请稍后重试。",
-                    "latency_ms": (time.monotonic() - start) * 1000,
-                }
-                if self.result_callback:
-                    self.result_callback(error_result["request_id"], error_result)
-                return error_result
         """
-        # TODO: implement
-        pass
+        start = time.monotonic()
+        try:
+            result = self.agent_graph(message)
+            result["request_id"] = message.get("request_id", "")
+            result["latency_ms"] = (time.monotonic() - start) * 1000
+            logger.info(
+                "Processed request_id=%s in %.1f ms",
+                result["request_id"], result["latency_ms"]
+            )
+            if self.result_callback:
+                self.result_callback(result["request_id"], result)
+            return result
+        except Exception as exc:
+            logger.exception("Error processing message %s", message.get("request_id"))
+            error_result = {
+                "request_id": message.get("request_id", ""),
+                "error":      str(exc),
+                "answer":     "抱歉，系统处理您的请求时发生错误，请稍后重试。",
+                "latency_ms": (time.monotonic() - start) * 1000,
+            }
+            if self.result_callback:
+                self.result_callback(error_result["request_id"], error_result)
+            return error_result
 
     def start(self) -> None:
         """
@@ -132,50 +124,44 @@ class QueueWorker:
         Call this method in a dedicated thread or as the main loop of a
         worker process.
 
-        How to implement:
-            logger.info("QueueWorker starting with %d threads", self.max_workers)
-            self._stop_event.clear()
-
-            while not self._stop_event.is_set():
-                try:
-                    message = self.queue.pop(timeout=5)   # 5s blocking pop
-                    if message is None:
-                        continue  # timeout, loop back to check stop_event
-                    future = self.executor.submit(self.process_message, message)
-                    self._futures.append(future)
-                    # Prune completed futures to prevent unbounded list growth
-                    self._futures = [f for f in self._futures if not f.done()]
-                except Exception as exc:
-                    logger.exception("Unexpected error in QueueWorker main loop: %s", exc)
-
-            logger.info("QueueWorker stop signal received.")
-
         Signal handling:
             Optionally register SIGINT / SIGTERM handlers that call self.stop()
             so the worker shuts down cleanly when containerised:
             signal.signal(signal.SIGTERM, lambda s, f: self.stop())
         """
-        # TODO: implement
-        pass
+        logger.info("QueueWorker starting with %d threads", self.max_workers)
+        self._stop_event.clear()    
+        
+        while not self._stop_event.is_set():
+            try:
+                message = self.queue.pop(timeout=5)   # 5s blocking pop
+                if message is None:
+                    continue  # timeout, loop back to check stop_event
+                future = self.executor.submit(self.process_message, message)
+                self._futures.append(future)
+                # Prune completed futures to prevent unbounded list growth
+                self._futures = [f for f in self._futures if not f.done()]
+            except Exception as exc:
+                logger.exception("Unexpected error in QueueWorker main loop: %s", exc)
+
+        logger.info("QueueWorker stop signal received.")
+        
+
 
     def stop(self) -> None:
         """
         Signal the worker to stop processing and wait for in-flight tasks.
-
-        How to implement:
-            logger.info("Stopping QueueWorker...")
-            self._stop_event.set()
-            # Wait for all in-flight futures to complete (with timeout)
-            for future in self._futures:
-                try:
-                    future.result(timeout=60)
-                except Exception:
-                    pass
-            self.executor.shutdown(wait=True)
-            logger.info("QueueWorker stopped. All in-flight tasks completed.")
         """
-        # TODO: implement
-        pass
+        logger.info("Stopping QueueWorker...")
+        self._stop_event.set()
+        # Wait for all in-flight futures to complete (with timeout)
+        for future in self._futures:
+            try:
+                future.result(timeout=60)
+            except Exception:
+                pass
+        self.executor.shutdown(wait=True)
+        logger.info("QueueWorker stopped. All in-flight tasks completed.")
 
     def start_in_background(self) -> threading.Thread:
         """
@@ -183,12 +169,8 @@ class QueueWorker:
 
         Returns:
             The started Thread object (can be used to join on shutdown).
-
-        How to implement:
-            thread = threading.Thread(target=self.start, daemon=True, name="QueueWorker")
-            thread.start()
-            logger.info("QueueWorker started in background thread: %s", thread.name)
-            return thread
         """
-        # TODO: implement
-        pass
+        thread = threading.Thread(target=self.start, daemon=True, name="QueueWorker")
+        thread.start()
+        logger.info("QueueWorker started in background thread: %s", thread.name)
+        return thread

@@ -95,8 +95,56 @@ class RouterAgent:
               (transformers AutoModelForSequenceClassification) and store as
               self.classifier for sub-20 ms classification without an LLM call.
         """
-        # TODO: implement
-        pass
+        self.llm = llm
+        self.routing_map = {
+            IntentType.FAQ: "faq_agent",
+            IntentType.ORDER: "order_agent",
+            IntentType.LOGISTICS: "order_agent",
+            IntentType.REFUND: "order_agent",
+            IntentType.UNKNOWN: "response_agent",
+        }
+        self.rewrite_prompt = [
+            ("system", 
+            """You are a query rewriting assistant for an e-commerce customer service chatbot.
+
+            Your task is to rewrite the user's latest query into a canonical, self-contained form that improves retrieval and intent classification accuracy.
+
+            Instructions:
+            1. Resolve pronouns and references using the conversation history. For example:
+            - "它到了吗？" (Has it arrived?) → identify the specific product/order from history and substitute.
+            - Replace vague pronouns with concrete entities (product names, order numbers, etc.).
+
+            2. Expand abbreviations, slang, and informal language into standard terms. For example:
+            - "快递" (express delivery) → "物流" (logistics status) if context suggests tracking.
+            - "退货" → "退款" (refund) depending on intent.
+
+            3. Add implicit context that clarifies the query. For example:
+            - If the user mentions an order number from earlier in the conversation, include it explicitly.
+            - If discussing a previous purchase, mention the product or order ID.
+
+            4. Output ONLY the rewritten query in Mandarin Chinese. Do not include explanations, JSON, or any other text.
+
+            Rewritten query:""")
+        ]
+        self.classify_prompt = [
+            ("system", 
+            """You are an intent classification assistant for an e-commerce customer service chatbot.
+
+            Your task is to classify the user's rewritten query into one of the following categories:
+
+            - FAQ: Questions about products, services, or policies.
+            - ORDER: Queries related to order status, modifications, or cancellations.
+            - LOGISTICS: Questions about shipping, delivery, or tracking information.
+            - REFUND: Requests for refunds or exchanges.
+            - UNKNOWN: Queries that do not fit into any of the above categories.
+
+            Instructions:
+            1. Read the rewritten query carefully.
+            2. Determine the most appropriate category based on the content and intent.
+            3. Output ONLY the category name in all uppercase letters.
+
+            Category:""")
+        ]
 
     # ---------------------------------------------------------------------- #
     # Step 1 – Query Rewrite                                                  #
@@ -136,8 +184,16 @@ class RouterAgent:
              Chinese that is self-contained and specific. Output ONLY the
              rewritten query."
         """
-        # TODO: implement
-        pass
+        history_messages = [(turn["role"], turn["content"]) for turn in history]
+        prompt = self.rewrite_prompt + history_messages + [("human", query)]
+        try:
+            response = self.llm.invoke(prompt)
+            rewritten_query = response.content.strip()
+            return rewritten_query
+        except Exception as e:
+            logger.warning(f"LLM rewrite failed: {e}. Returning original query.")
+            return query
+        
 
     # ---------------------------------------------------------------------- #
     # Step 2 – Intent Classification                                          #
@@ -174,8 +230,15 @@ class RouterAgent:
 
         Key metric: intent accuracy target ≥ 93%.
         """
-        # TODO: implement
-        pass
+        prompt = self.classify_prompt + [("human", query)]
+        try:
+            response = self.llm.invoke(prompt)
+            intent_str = response.content.strip().lower()
+            intent = IntentType(intent_str) if intent_str in IntentType.__members__.values() else IntentType.UNKNOWN
+            return intent
+        except Exception as e:
+            logger.warning(f"LLM classification failed: {e}. Returning UNKNOWN intent.")
+            return IntentType.UNKNOWN
 
     # ---------------------------------------------------------------------- #
     # Step 3 – LangGraph node                                                 #
@@ -212,5 +275,11 @@ class RouterAgent:
         Note: LangGraph passes `state` as a dict; mutate it in-place and
         return the routing key so conditional_edges can pick the right branch.
         """
-        # TODO: implement
-        pass
+        query = state["query"]
+        history = state.get("history", [])
+        rewritten = self.rewrite_query(query, history)
+        state["rewritten_query"] = rewritten
+        intent = self.classify_intent(rewritten)
+        state["intent"] = intent.value
+        logger.info(f"Routing query '{rewritten}' with intent '{intent.value}'")
+        return self.routing_map[intent]

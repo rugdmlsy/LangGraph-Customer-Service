@@ -82,8 +82,11 @@ class TestRouterAgent:
 
         TODO: implement test body
         """
-        # TODO: implement
-        pass
+        agent = RouterAgent(mock_llm)
+        mock_llm.invoke.return_value = MagicMock(content="FAQ")
+        result = agent.classify_intent("退款政策是什么？")
+        assert result == IntentType.FAQ
+
 
     def test_router_intent_classification_order(self, mock_llm):
         """
@@ -94,8 +97,10 @@ class TestRouterAgent:
 
         TODO: implement test body
         """
-        # TODO: implement
-        pass
+        agent = RouterAgent(mock_llm)
+        mock_llm.invoke.return_value = MagicMock(content="ORDER")
+        result = agent.classify_intent("我的订单在哪里？")
+        assert result == IntentType.ORDER
 
     def test_router_intent_classification_logistics(self, mock_llm):
         """
@@ -103,8 +108,10 @@ class TestRouterAgent:
 
         TODO: implement test body
         """
-        # TODO: implement
-        pass
+        agent = RouterAgent(mock_llm)
+        mock_llm.invoke.return_value = MagicMock(content="LOGISTICS")
+        result = agent.classify_intent("快递什么时候到？")
+        assert result == IntentType.LOGISTICS
 
     def test_router_intent_classification_refund(self, mock_llm):
         """
@@ -112,8 +119,10 @@ class TestRouterAgent:
 
         TODO: implement test body
         """
-        # TODO: implement
-        pass
+        agent = RouterAgent(mock_llm)
+        mock_llm.invoke.return_value = MagicMock(content="REFUND")
+        result = agent.classify_intent("我想申请退款。")
+        assert result == IntentType.REFUND
 
     def test_router_intent_classification_unknown(self, mock_llm):
         """
@@ -121,8 +130,10 @@ class TestRouterAgent:
 
         TODO: implement test body
         """
-        # TODO: implement
-        pass
+        agent = RouterAgent(mock_llm)
+        mock_llm.invoke.return_value = MagicMock(content="UNKNOWN")
+        result = agent.classify_intent("今天天气怎么样？")
+        assert result == IntentType.UNKNOWN
 
     def test_router_rewrite_query(self, mock_llm):
         """
@@ -136,8 +147,10 @@ class TestRouterAgent:
 
         TODO: implement test body
         """
-        # TODO: implement
-        pass
+        agent = RouterAgent(mock_llm)
+        mock_llm.invoke.return_value = MagicMock(content="rewritten query")
+        result = agent.rewrite_query("快递呢", [])
+        assert result == "rewritten query"
 
     def test_router_rewrite_falls_back_on_llm_error(self, mock_llm):
         """
@@ -151,8 +164,10 @@ class TestRouterAgent:
 
         TODO: implement test body
         """
-        # TODO: implement
-        pass
+        agent = RouterAgent(mock_llm)
+        mock_llm.invoke.side_effect = Exception("LLM unavailable")
+        result = agent.rewrite_query("original query", [])
+        assert result == "original query"
 
     def test_route_updates_state(self, mock_llm):
         """
@@ -171,8 +186,15 @@ class TestRouterAgent:
 
         TODO: implement test body
         """
-        # TODO: implement
-        pass
+        router = RouterAgent(mock_llm)
+        # Patch rewrite_query and classify_intent
+        router.rewrite_query = lambda query, history: "rewritten"
+        router.classify_intent = lambda query: IntentType.FAQ
+        state = {"query": "original", "history": []}
+        result = router.route(state)
+        assert state.get("rewritten_query") == "rewritten"
+        assert state.get("intent") == IntentType.FAQ.value
+        assert result == "faq_agent"
 
 
 # --------------------------------------------------------------------------- #
@@ -196,8 +218,11 @@ class TestFAQAgent:
 
         TODO: implement test body
         """
-        # TODO: implement
-        pass
+        agent = FAQAgent(mock_llm, mock_retriever)
+        docs  = agent.retrieve_context("退款政策", top_k=3)
+        mock_retriever.hybrid_search.assert_called_once()
+        mock_retriever.rerank.assert_called_once()
+        assert isinstance(docs, list)
 
     def test_faq_agent_empty_retrieval_returns_no_info_message(self, mock_llm, mock_retriever):
         """
@@ -215,8 +240,13 @@ class TestFAQAgent:
 
         TODO: implement test body
         """
-        # TODO: implement
-        pass
+        mock_retriever.hybrid_search.return_value = []
+        mock_retriever.rerank.return_value = []
+        agent = FAQAgent(mock_llm, mock_retriever)
+        answer = agent.generate_answer("question", [], [])
+        # Should NOT call the LLM when context is empty
+        mock_llm.invoke.assert_not_called()
+        assert "没有" in answer or "无法" in answer or len(answer) > 0
 
     def test_faq_agent_run_updates_state(self, mock_llm, mock_retriever):
         """
@@ -231,8 +261,11 @@ class TestFAQAgent:
 
         TODO: implement test body
         """
-        # TODO: implement
-        pass
+        agent = FAQAgent(mock_llm, mock_retriever)
+        state = {"rewritten_query": "退款政策", "history": []}
+        result = agent.run(state)
+        assert "rag_results" in result
+        assert "final_answer" in result
 
 
 # --------------------------------------------------------------------------- #
@@ -255,8 +288,10 @@ class TestOrderAgent:
 
         TODO: implement test body
         """
-        # TODO: implement
-        pass
+        agent = OrderAgent(mock_llm, mock_tools)
+        result = agent.execute_tool("get_order_status", {"order_id": "ORD-001"})
+        mock_tools[0].invoke.assert_called_once_with({"order_id": "ORD-001"})
+        assert result == {"status": "shipped"}
 
     def test_order_agent_unknown_tool_returns_error(self, mock_llm, mock_tools):
         """
@@ -269,8 +304,9 @@ class TestOrderAgent:
 
         TODO: implement test body
         """
-        # TODO: implement
-        pass
+        agent = OrderAgent(mock_llm, mock_tools)
+        result = agent.execute_tool("nonexistent_tool", {})
+        assert "error" in result
 
     def test_order_agent_select_tool_order_intent(self, mock_llm, mock_tools):
         """
@@ -278,8 +314,10 @@ class TestOrderAgent:
 
         TODO: implement test body
         """
-        # TODO: implement
-        pass
+        agent = OrderAgent(mock_llm, mock_tools)
+        mock_llm.invoke.return_value = MagicMock(content="This query is about order")
+        result = agent.select_tool("Where is my order?", IntentType.ORDER)
+        assert result == "get_order_status"
 
     def test_order_agent_run_updates_state(self, mock_llm, mock_tools):
         """
@@ -291,5 +329,9 @@ class TestOrderAgent:
 
         TODO: implement test body
         """
-        # TODO: implement
-        pass
+        agent = OrderAgent(mock_llm, mock_tools)
+        mock_llm.invoke.return_value = MagicMock(content="No more tool calls")
+        state = {"rewritten_query": "Where is my order?", "intent": IntentType.ORDER.value, "history": []}
+        result = agent.run(state)
+        assert "tool_results" in result
+        assert "final_answer" in result

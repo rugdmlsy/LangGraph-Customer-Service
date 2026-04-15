@@ -12,3 +12,5 @@ wheels/
 doc
 */.env
 .env
+.claude
+.pytest_cache

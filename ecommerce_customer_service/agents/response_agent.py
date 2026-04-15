@@ -49,19 +49,17 @@ class ResponseAgent:
 
         Args:
             llm: Chat model instance.
-
-        TODO:
-            - self.llm = llm
-            - Define self.synthesis_prompt: a ChatPromptTemplate with a system
-              message that instructs the LLM to:
-              * Merge information from multiple sources without repetition.
-              * Answer in the same language as the user.
-              * Be concise (≤ 3 paragraphs for most queries).
-              * Suggest a relevant follow-up action when applicable.
-              * Never fabricate information not present in the provided inputs.
         """
-        # TODO: implement
-        pass
+        self.llm = llm
+        self.synthesis_prompt = [
+            ("system", "You are a helpful assistant. Your task is as follows: \
+                * Merge information from multiple sources without repetition. \
+                * Answer in the same language as the user. \
+                * Be concise (≤ 3 paragraphs for most queries). \
+                * Suggest a relevant follow-up action when applicable. \
+                * Never fabricate information not present in the provided inputs.")
+        ]
+
 
     # ---------------------------------------------------------------------- #
     # Core synthesis                                                          #
@@ -89,30 +87,47 @@ class ResponseAgent:
         Returns:
             Final answer string suitable for returning directly to the user.
 
-        How to implement:
-            1. Determine what information is available:
-               has_tool = len(tool_results) > 0
-               has_rag  = len(rag_results) > 0
-            2. If neither — return a graceful "I'm sorry, I couldn't find
-               relevant information" message without calling the LLM.
-            3. Build a prompt that includes:
-               - Section A: Structured API results (formatted as bullet points).
-               - Section B: Relevant FAQ passages (numbered citations).
-               - User query.
-               - Instruction: synthesise a single coherent answer from A and B.
-            4. Call self.llm.invoke(messages) and return .content.
-            5. Post-process: strip extra whitespace, ensure the response ends
-               with a period / question mark for readability.
-
         Edge cases:
             - Tool call returned an error → acknowledge the failure politely
               and suggest the user contact human support.
-            - RAG returned irrelevant docs (low scores) → omit them from the
+            TODO: - RAG returned irrelevant docs (low scores) → omit them from the
               synthesis prompt to avoid confusing the LLM.
         """
-        # TODO: implement
-        pass
-
+        has_tool = len(tool_results) > 0
+        has_rag = len(rag_results) > 0
+        if not has_tool and not has_rag:
+            return "I'm sorry, I couldn't find relevant information to answer \
+                    your question. Please contact our support team for further assistance."
+        if "error" in [res.get("result", {}).get("status") for res in tool_results]:
+            return "I'm sorry, there was an issue retrieving some information. \
+                    Please contact our support team for further assistance."
+        tool_results_str = "None"
+        if has_tool:
+            tool_summaries = []
+            for res in tool_results:
+                tool_name = res["tool"]
+                result_summary = res["result"].get("summary") or str(res["result"])
+                tool_summaries.append(f"{tool_name} output: {result_summary}")
+            tool_results_str = "\n".join(tool_summaries)
+        rag_results_str = "None"
+        if has_rag:
+            rag_summaries = []
+            for doc in rag_results:
+                title = doc.get("metadata", {}).get("title", "Untitled")
+                snippet = doc.get("snippet", "")
+                rag_summaries.append(f"{title}: {snippet}")
+            rag_results_str = "\n".join(rag_summaries)
+        self.synthesis_prompt.append(
+            ("user", f"User query: {query}\n\n"
+                     f"Tool results: {tool_results_str if has_tool else 'None'}\n\n"
+                     f"RAG results: {rag_results_str if has_rag else 'None'}\n\n"
+                     "Please synthesise a single coherent answer based on the above information."))
+        response = self.llm.invoke(self.synthesis_prompt)
+        final_answer = response.content.strip()
+        if not final_answer.endswith(('.', '?')):
+            final_answer += '.'
+        return final_answer
+    
     # ---------------------------------------------------------------------- #
     # LangGraph node                                                          #
     # ---------------------------------------------------------------------- #
@@ -141,5 +156,11 @@ class ResponseAgent:
             6. answer = self.synthesize(query, tool_results, rag_results, history)
             7. Return {"final_answer": answer}.
         """
-        # TODO: implement
-        pass
+        query = state.get("rewritten_query") or state["query"]
+        tool_results = state.get("tool_results", [])
+        rag_results = state.get("rag_results", [])
+        history = state.get("history", [])
+        if state.get("needs_synthesis") is False and "final_answer" in state:
+            return {"final_answer": state["final_answer"]}
+        answer = self.synthesize(query, tool_results, rag_results, history)
+        return {"final_answer": answer}

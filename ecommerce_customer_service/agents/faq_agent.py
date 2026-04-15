@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import logging
 from typing import Any
+from config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -51,14 +52,15 @@ class FAQAgent:
                        to avoid loading multiple model replicas).
             retriever: rag.retriever.Retriever instance.  Injected so that
                        tests can substitute a mock retriever.
-
-        TODO:
-            - Assign self.llm = llm and self.retriever = retriever.
-            - Set up a LangChain ChatPromptTemplate for the generation step.
-              Store it as self.prompt_template for reuse across calls.
         """
-        # TODO: implement
-        pass
+        self.llm = llm
+        self.retriever = retriever
+        self.prompt_template = [
+            ("system", "You are a helpful assistant. Your task is to answer the \
+                user's question based strictly on the provided context. Do not \
+                include information not present in the context. Answer in the \
+                same language as the user query (Chinese or English).")
+        ]
 
     # ---------------------------------------------------------------------- #
     # Step 1 – Retrieval                                                      #
@@ -91,8 +93,13 @@ class FAQAgent:
                generation step should gracefully handle an empty context by
                admitting it does not have enough information.
         """
-        # TODO: implement
-        pass
+        try:
+            candidates = self.retriever.hybrid_search(query, top_k=settings.RETRIEVAL_TOP_K)
+            reranked = self.retriever.rerank(query, candidates, top_n=top_k)
+            return reranked
+        except Exception as e:
+            logger.error(f"Error during retrieval: {e}", exc_info=True)
+            return []
 
     # ---------------------------------------------------------------------- #
     # Step 2 – Generation                                                     #
@@ -137,8 +144,20 @@ class FAQAgent:
             present in the provided context." This is the single biggest lever
             for faithfulness scores.
         """
-        # TODO: implement
-        pass
+        if not context:
+            return "I'm sorry, I couldn't find relevant information to answer \
+                    your question. Please contact our support team for further assistance."
+        context_block = "\n\n".join(
+            [f"--- Document {i+1} ---\n{doc['text']}" for i, doc in enumerate(context)]
+        )
+        prompt = self.prompt_template + history[-5:] + [
+            ("user", f"Context:\n{context_block}\n\nQuestion: {query}\n\n"
+                     "Please provide a concise answer based only on the above context.")
+        ]
+        response = self.llm.invoke(prompt)
+        answer = response.content.strip()
+        logger.debug(f"Generated answer of length {len(answer)} for query of length {len(query)}")
+        return answer
 
     # ---------------------------------------------------------------------- #
     # LangGraph node                                                          #
@@ -166,5 +185,16 @@ class FAQAgent:
             6. Wrap everything in try/except; on failure set final_answer to
                a friendly error message and log the traceback.
         """
-        # TODO: implement
-        pass
+        try:
+            query = state.get("rewritten_query") or state["query"]
+            history = state.get("history", [])
+            docs = self.retrieve_context(query)
+            answer = self.generate_answer(query, docs, history)
+            return {"rag_results": docs, "final_answer": answer}
+        except Exception as e:
+            logger.error(f"Error in FAQAgent.run: {e}", exc_info=True)
+            return {
+                "rag_results": [],
+                "final_answer": "I'm sorry, there was an issue retrieving information to answer your question. \
+                                 Please contact our support team for further assistance."
+            }

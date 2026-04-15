@@ -119,64 +119,45 @@ class RedisQueue(MessageQueue):
         Args:
             redis_client: Connected redis.Redis instance.
             key:          Redis list key for the queue.
-
-        TODO:
-            - self.redis = redis_client
-            - self.key   = key
         """
-        # TODO: implement
-        pass
+        self.redis = redis_client
+        self.key = key
+
 
     def push(self, message: dict) -> str:
         """
         Serialize and push a message to the head of the Redis list.
-
-        How to implement:
-            if "request_id" not in message:
-                message["request_id"] = str(uuid.uuid4())
-            if "timestamp" not in message:
-                message["timestamp"] = datetime.now(timezone.utc).isoformat()
-            self.redis.lpush(self.key, json.dumps(message, ensure_ascii=False))
-            logger.debug("Pushed request_id=%s to queue", message["request_id"])
-            return message["request_id"]
         """
-        # TODO: implement
-        pass
+        if "request_id" not in message:
+            message["request_id"] = str(uuid.uuid4())
+        if "timestamp" not in message:
+            message["timestamp"] = datetime.now(timezone.utc).isoformat()
+        self.redis.lpush(self.key, json.dumps(message, ensure_ascii=False))
+        logger.debug("Pushed request_id=%s to queue", message["request_id"])
+        return message["request_id"]
 
     def pop(self, timeout: int = 30) -> dict | None:
         """
         Blocking pop from the tail of the Redis list.
-
-        How to implement:
-            result = self.redis.brpop(self.key, timeout=timeout)
-            if result is None:
-                return None  # timeout expired
-            _, raw = result
-            return json.loads(raw)
         """
-        # TODO: implement
-        pass
+        result = self.redis.brpop(self.key, timeout=timeout)
+        if result is None:
+            return None  # timeout expired
+        _, raw = result
+        return json.loads(raw)
 
     def peek(self) -> dict | None:
         """
         Non-destructive peek at the last item (next to be popped).
-
-        How to implement:
-            raw = self.redis.lindex(self.key, -1)
-            return json.loads(raw) if raw else None
         """
-        # TODO: implement
-        pass
+        raw = self.redis.lindex(self.key, -1)
+        return json.loads(raw) if raw else None
 
     def size(self) -> int:
         """
         Return the queue length.
-
-        How to implement:
-            return self.redis.llen(self.key)
         """
-        # TODO: implement
-        pass
+        return self.redis.llen(self.key)
 
 
 # --------------------------------------------------------------------------- #

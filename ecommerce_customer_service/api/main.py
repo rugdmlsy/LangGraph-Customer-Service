@@ -37,6 +37,12 @@ from typing import Any
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from graph.agent_graph import _compiled_graph_singleton
+from config import settings
+from graph.agent_graph import init_graph
+from message_queue.message_queue import RedisQueue
+from message_queue.worker import QueueWorker
+import redis
 
 logger = logging.getLogger(__name__)
 
@@ -133,19 +139,14 @@ def get_compiled_graph() -> Any:
     """
     FastAPI dependency that returns the compiled agent graph singleton.
 
-    How to implement:
-        from graph.agent_graph import _compiled_graph_singleton
-        if _compiled_graph_singleton is None:
-            raise HTTPException(status_code=503, detail="Agent graph not initialised")
-        return _compiled_graph_singleton
-
     Usage in endpoint:
         @app.post("/chat")
         async def chat(req: ChatRequest, graph=Depends(get_compiled_graph)):
             ...
     """
-    # TODO: implement
-    pass
+    if _compiled_graph_singleton is None:
+        raise HTTPException(status_code=503, detail="Agent graph not initialised")
+    return _compiled_graph_singleton
 
 
 def get_message_queue() -> Any:
@@ -155,9 +156,8 @@ def get_message_queue() -> Any:
     How to implement:
         Return the module-level queue singleton initialised in lifespan().
     """
-    # TODO: implement
-    pass
-
+    return app.state.queue  # Assuming it's set in the lifespan startup logic
+    
 
 # --------------------------------------------------------------------------- #
 # Application lifespan                                                         #
@@ -209,9 +209,26 @@ async def lifespan(app: FastAPI):
             app.state.worker.stop()
         logger.info("System shutdown complete.")
     """
-    # TODO: implement startup
+    # Startup
+    logger.info("Initialising agent graph...")
+    graph = init_graph(settings)
+    app.state.graph = graph
+
+    redis_client = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
+    app.state.queue = RedisQueue(redis_client, key=settings.REDIS_QUEUE_KEY)
+
+    if getattr(settings, 'USE_QUEUE', False):
+        worker = QueueWorker(app.state.queue, lambda m: graph.invoke({...}))
+        app.state.worker_thread = worker.start_in_background()
+        app.state.worker = worker
+
+    logger.info("System ready.")
     yield
-    # TODO: implement shutdown
+
+    # Shutdown
+    if getattr(settings, 'USE_QUEUE', False):
+        app.state.worker.stop()
+    logger.info("System shutdown complete.")
 
 
 # --------------------------------------------------------------------------- #

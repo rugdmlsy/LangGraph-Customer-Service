@@ -32,9 +32,11 @@ Why LangGraph over vanilla LangChain?
 from __future__ import annotations
 
 import logging
+import uuid, time
 from typing import Annotated, Any
 
 from typing_extensions import TypedDict
+from langgraph.graph import StateGraph, START, END
 
 logger = logging.getLogger(__name__)
 
@@ -151,8 +153,35 @@ def build_graph(
         return graph.compile(checkpointer=MemorySaver())
     Then invoke with config={"configurable": {"thread_id": session_id}}.
     """
-    # TODO: implement
-    pass
+    graph = StateGraph(AgentState)
+    graph.add_node("router_agent",   router_agent.route)
+    graph.add_node("faq_agent",      faq_agent.run)
+    graph.add_node("order_agent",    order_agent.run)
+    graph.add_node("response_agent", response_agent.run)
+    graph.set_entry_point("router_agent")   
+    
+    def routing_fn(state: AgentState) -> str:
+        intent = state.get("intent", "unknown")
+        if intent == "faq":
+            return "faq_agent"
+        elif intent in ("order", "logistics", "refund"):
+            return "order_agent"
+        else:
+            return "response_agent"
+        
+    graph.add_conditional_edges(
+        "router_agent",
+        routing_fn,
+        {
+            "faq_agent":      "faq_agent",
+            "order_agent":    "order_agent",
+            "response_agent": "response_agent",
+        }
+    )
+    graph.add_edge("faq_agent",   "response_agent")
+    graph.add_edge("order_agent", "response_agent")
+    graph.add_edge("response_agent", END)
+    return graph.compile()
 
 
 # --------------------------------------------------------------------------- #
@@ -215,8 +244,28 @@ def run_graph(
             # event is a dict of {node_name: partial_state}
             yield event
     """
-    # TODO: implement
-    pass
+    if history is None:
+        history = []
+    if session_id is None:
+        session_id = str(uuid.uuid4())
+
+    initial_state: AgentState = {
+        "query":      query,
+        "history":    history,
+        "user_id":    user_id,
+        "session_id": session_id,
+    }
+
+    graph = compiled_graph or _compiled_graph_singleton  # lazy init
+    start = time.monotonic()
+    result = graph.invoke(initial_state)
+    latency_ms = (time.monotonic() - start) * 1000
+
+    logger.info(
+        "Graph completed | user=%s | intent=%s | latency=%.1f ms",
+        user_id, result.get("intent"), latency_ms
+    )
+    return result.get("final_answer", "抱歉，系统暂时无法处理您的请求。")
 
 
 # --------------------------------------------------------------------------- #
@@ -277,5 +326,34 @@ def init_graph(settings: Any = None) -> Any:
         _compiled_graph_singleton = build_graph(router, faq, order, response)
         return _compiled_graph_singleton
     """
-    # TODO: implement
-    pass
+    global _compiled_graph_singleton
+
+    from config import settings as cfg
+    if settings is None:
+        settings = cfg
+
+    from langchain_openai import ChatOpenAI
+    llm = ChatOpenAI(
+        base_url=settings.LLM_API_BASE,
+        api_key=settings.LLM_API_KEY,
+        model=settings.LLM_MODEL_NAME,
+        temperature=settings.LLM_TEMPERATURE,
+        max_completion_tokens=settings.LLM_MAX_TOKENS,
+    )
+    
+    from rag import Embedder, KnowledgeBase, SlidingWindowChunker, Retriever
+    embedder = Embedder(settings.EMBEDDING_MODEL_NAME)
+    chunker  = SlidingWindowChunker(settings.CHUNK_SIZE, settings.CHUNK_OVERLAP)
+    kb       = KnowledgeBase(embedder, chunker, settings.MILVUS_HOST, settings.MILVUS_PORT)
+    kb.connect()
+    retriever = Retriever(kb, embedder, settings.RERANKER_MODEL_NAME)   
+    
+    from agents import RouterAgent, FAQAgent, OrderAgent, ResponseAgent
+    from tools import ALL_TOOLS
+    router   = RouterAgent(llm)
+    faq      = FAQAgent(llm, retriever)
+    order    = OrderAgent(llm, ALL_TOOLS)
+    response = ResponseAgent(llm)
+    
+    _compiled_graph_singleton = build_graph(router, faq, order, response)
+    return _compiled_graph_singleton

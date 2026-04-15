@@ -64,8 +64,21 @@ class OrderAgent:
             - self.max_iterations = max_iterations
             - Build a system prompt that lists available tools and their purpose.
         """
-        # TODO: implement
-        pass
+        self.llm = llm
+        self.tools = tools
+        self.llm_with_tools = llm.bind_tools(tools)
+        self.tool_map = {t.name: t for t in tools}
+        self.max_iterations = max_iterations
+        tool_descriptions = "\n".join([f"{t.name}: {t.description}" for t in tools])
+        self.system_prompt = f"You are an assistant for handling customer service queries \
+                                related to orders, logistics, and refunds. You have access \
+                                to the following tools:\n{tool_descriptions}\nGiven a user \
+                                query and classified intent, decide which tools to call and \
+                                in what order to retrieve the necessary information to answer \
+                                the query. Always call the most specific tool available for \
+                                the intent. If the query is ambiguous, use your best judgement \
+                                to choose the most relevant tool. If a tool call returns an error, \
+                                acknowledge it and suggest contacting support."
 
     # ---------------------------------------------------------------------- #
     # Tool selection                                                           #
@@ -102,8 +115,32 @@ class OrderAgent:
         In practice: use Approach A as default; fall back to LLM when intent
         is UNKNOWN or the first tool call returns an error.
         """
-        # TODO: implement
-        pass
+        if intent == "order":
+            if "详情" in query or "detail" in query:
+                return "get_order_detail"
+            return "get_order_status"
+        elif intent == "logistics":
+            if "carrier" in query or "承运商" in query:
+                return "get_logistics_detail"
+            return "query_logistics"
+        elif intent == "refund":
+            if "创建" in query or "create" in query:
+                return "create_refund"
+            elif "状态" in query or "status" in query:
+                return "get_refund_status"
+            return "check_refund_eligibility"
+        else:
+            # Intent is UNKNOWN; ask LLM to choose the most relevant tool
+            prompt = f"""Given the user query: "{query}", and the following tools:
+                        {', '.join(self.tool_map.keys())}
+                        Which tool is most relevant to answer the query? Respond with only the tool name."""
+            response = self.llm.invoke([("system", prompt)])
+            chosen_tool = response.content.strip()
+            if chosen_tool in self.tool_map:
+                return chosen_tool
+            else:
+                logger.warning(f"LLM selected unknown tool: {chosen_tool}. Defaulting to 'get_order_status'.")
+                return "get_order_status"
 
     # ---------------------------------------------------------------------- #
     # Tool execution                                                           #
@@ -131,8 +168,19 @@ class OrderAgent:
             6. Log every tool call (name, params, result snippet) at INFO level
                for debugging and for computing tool-call success rate metrics.
         """
-        # TODO: implement
-        pass
+        tool_fn = self.tool_map.get(tool_name)
+        if not tool_fn:
+            error_msg = f"unknown tool: {tool_name}"
+            logger.error(error_msg)
+            return {"error": error_msg, "tool": tool_name}
+        try:
+            result = tool_fn.invoke(params)
+            logger.info(f"Executed tool {tool_name} with params {params}. Result snippet: {str(result)[:100]}")
+            return result
+        except Exception as e:
+            error_msg = f"error executing tool {tool_name}: {repr(e)}"
+            logger.error(error_msg)
+            return {"error": error_msg, "tool": tool_name}
 
     # ---------------------------------------------------------------------- #
     # LangGraph node — ReAct loop                                             #
@@ -167,5 +215,30 @@ class OrderAgent:
             5. Return {"tool_results": tool_results, "final_answer": final_text}.
             6. On LLM error, return a graceful error message and empty tool_results.
         """
-        # TODO: implement
-        pass
+        query = state.get("rewritten_query") or state["query"]
+        intent = state.get("intent", "UNKNOWN")
+        history = state.get("history", [])
+        user_id = state.get("user_id", "anonymous")
+        messages = [("system", self.system_prompt)] + history + [("user", query)]
+        tool_results = []
+        try:
+            ai_message = None
+            for _ in range(self.max_iterations):
+                ai_message = self.llm_with_tools.invoke(messages)
+                if not ai_message.tool_calls:
+                    break
+                for tool_call in ai_message.tool_calls:
+                    tool_name = tool_call.name
+                    args = tool_call.args
+                    result = self.execute_tool(tool_name, args)
+                    tool_results.append({"tool": tool_name, "args": args, "result": result})
+                    messages.append(("tool", f"{tool_name}({args}) → {result}"))
+                messages.append(("ai", ai_message.content))
+            final_answer = ai_message.content.strip() if ai_message else ""
+            if not final_answer.endswith(('.', '?')):
+                final_answer += '.'
+            return {"tool_results": tool_results, "final_answer": final_answer}
+        except Exception as e:
+            logger.error(f"Error during ReAct loop: {repr(e)}")
+            return {"tool_results": [], "final_answer": "I'm sorry, there was an issue \
+                    processing your request. Please contact our support team for assistance."}
