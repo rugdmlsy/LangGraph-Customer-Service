@@ -410,33 +410,33 @@ print(results['metrics'])
 
 ## 快速参考：文件 → 阶段映射
 
-| 文件 | 阶段 | 依赖 |
-|---|---|---|
-| `config/settings.py` | 1 | — |
-| `services/mock_order_service.py` | 1 | 设置 |
-| `services/mock_logistics_service.py` | 1 | — |
-| `tools/order_tools.py` | 1 | mock_order_service |
-| `tools/logistics_tools.py` | 1 | mock_logistics_service |
-| `tools/refund_tools.py` | 1 | mock_order_service |
-| `tests/test_tools.py` | 1 | 工具 |
-| `rag/chunker.py` | 2 | — |
-| `rag/embedder.py` | 2 | — |
-| `rag/knowledge_base.py` | 2 | 分块器，嵌入器 |
-| `rag/retriever.py` | 2 | knowledge_base，嵌入器 |
-| `tests/test_rag.py` | 2 | rag/* |
-| `memory/short_term.py` | 3 | — |
-| `memory/long_term.py` | 3 | redis |
-| `agents/response_agent.py` | 4 | LLM |
-| `agents/faq_agent.py` | 4 | 检索器，LLM |
-| `agents/order_agent.py` | 4 | 工具，LLM |
-| `agents/router_agent.py` | 4 | LLM |
-| `tests/test_agents.py` | 4 | 代理 |
-| `graph/agent_graph.py` | 5 | 所有代理 |
-| `queue/message_queue.py` | 6 | redis |
-| `queue/worker.py` | 6 | message_queue，图 |
-| `api/main.py` | 6 | 图，队列 |
-| `evaluation/ragas_evaluator.py` | 7 | LLM，嵌入 |
-| `evaluation/offline_evaluator.py` | 7 | ragas_evaluator，图 |
+| 文件                                 | 阶段 | 依赖                   |
+| ------------------------------------ | ---- | ---------------------- |
+| `config/settings.py`                 | 1    | —                      |
+| `services/mock_order_service.py`     | 1    | 设置                   |
+| `services/mock_logistics_service.py` | 1    | —                      |
+| `tools/order_tools.py`               | 1    | mock_order_service     |
+| `tools/logistics_tools.py`           | 1    | mock_logistics_service |
+| `tools/refund_tools.py`              | 1    | mock_order_service     |
+| `tests/test_tools.py`                | 1    | 工具                   |
+| `rag/chunker.py`                     | 2    | —                      |
+| `rag/embedder.py`                    | 2    | —                      |
+| `rag/knowledge_base.py`              | 2    | 分块器，嵌入器         |
+| `rag/retriever.py`                   | 2    | knowledge_base，嵌入器 |
+| `tests/test_rag.py`                  | 2    | rag/*                  |
+| `memory/short_term.py`               | 3    | —                      |
+| `memory/long_term.py`                | 3    | redis                  |
+| `agents/response_agent.py`           | 4    | LLM                    |
+| `agents/faq_agent.py`                | 4    | 检索器，LLM            |
+| `agents/order_agent.py`              | 4    | 工具，LLM              |
+| `agents/router_agent.py`             | 4    | LLM                    |
+| `tests/test_agents.py`               | 4    | 代理                   |
+| `graph/agent_graph.py`               | 5    | 所有代理               |
+| `queue/message_queue.py`             | 6    | redis                  |
+| `queue/worker.py`                    | 6    | message_queue，图      |
+| `api/main.py`                        | 6    | 图，队列               |
+| `evaluation/ragas_evaluator.py`      | 7    | LLM，嵌入              |
+| `evaluation/offline_evaluator.py`    | 7    | ragas_evaluator，图    |
 
 ---
 

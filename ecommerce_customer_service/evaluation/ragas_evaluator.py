@@ -36,6 +36,10 @@ from __future__ import annotations
 
 import logging
 from typing import Any
+from ragas.metrics.collections import AnswerRelevancy, ContextPrecision, Faithfulness
+from datasets import Dataset
+from ragas import evaluate
+from ragas.evaluation import EvaluationResult  # type: ignore[import-not-found]
 
 logger = logging.getLogger(__name__)
 
@@ -69,21 +73,16 @@ class RAGASEvaluator:
                         Should be a capable model (GPT-4 or equivalent) for
                         accurate faithfulness scoring.
             embeddings: LangChain embeddings (used for answer_relevance metric).
-
-        TODO:
-            from ragas.metrics import faithfulness, answer_relevance, context_precision
-            self.llm        = llm
-            self.embeddings = embeddings
-            self.metrics    = [faithfulness, answer_relevance, context_precision]
-
-            # Configure each metric with the judge LLM and embeddings
-            faithfulness.llm           = llm
-            answer_relevance.llm       = llm
-            answer_relevance.embeddings = embeddings
-            context_precision.llm      = llm
         """
-        # TODO: implement
-        pass
+        self.llm        = llm
+        self.embeddings = embeddings
+        self.metrics    = [Faithfulness(llm=llm), AnswerRelevancy(llm=llm, embeddings=embeddings), ContextPrecision(llm=llm)]
+
+        # Configure each metric with the judge LLM and embeddings
+        # faithfulness.llm           = llm
+        # answer_relevance.llm       = llm
+        # answer_relevance.embeddings = embeddings
+        # context_precision.llm      = llm
 
     def evaluate_dataset(
         self,
@@ -112,33 +111,26 @@ class RAGASEvaluator:
                 "composite_score":  0.84,  # mean of all metrics
             }
 
-        How to implement:
-            from datasets import Dataset
-            from ragas import evaluate
-
-            data = {
-                "question":  questions,
-                "answer":    answers,
-                "contexts":  contexts,
-            }
-            if ground_truths:
-                data["ground_truth"] = ground_truths
-
-            dataset = Dataset.from_dict(data)
-            result  = evaluate(dataset, metrics=self.metrics)
-            df      = result.to_pandas()
-
-            scores = {col: float(df[col].mean()) for col in df.columns
-                      if col not in ("question", "answer", "contexts", "ground_truth")}
-            scores["composite_score"] = sum(scores.values()) / len(scores)
-            logger.info("RAGAS evaluation completed: %s", scores)
-            return scores
-
         Tip: For large datasets (>1000 samples), sample a representative
         subset of 200–500 questions to keep evaluation time under 1 hour.
         """
-        # TODO: implement
-        pass
+        data = {
+            "question":  questions,
+            "answer":    answers,
+            "contexts":  contexts,
+        }
+        if ground_truths:
+            data["ground_truth"] = ground_truths
+
+        dataset = Dataset.from_dict(data)
+        result= evaluate(dataset, metrics=self.metrics)  
+        df      = result.to_pandas() # type: ignore[union-attr]
+
+        scores = {col: float(df[col].mean()) for col in df.columns
+                    if col not in ("question", "answer", "contexts", "ground_truth")}
+        scores["composite_score"] = sum(scores.values()) / len(scores)
+        logger.info("RAGAS evaluation completed: %s", scores)
+        return scores
 
     def generate_report(self, results: dict) -> str:
         """
@@ -149,30 +141,26 @@ class RAGASEvaluator:
 
         Returns:
             Markdown string with a table of metrics and pass/fail thresholds.
-
-        How to implement:
-            lines = [
-                "# RAGAS Evaluation Report",
-                "",
-                "| Metric | Score | Threshold | Status |",
-                "|--------|-------|-----------|--------|",
-            ]
-            thresholds = {
-                "faithfulness":      0.85,
-                "answer_relevance":  0.80,
-                "context_precision": 0.75,
-            }
-            for metric, score in results.items():
-                if metric == "composite_score":
-                    continue
-                threshold = thresholds.get(metric, 0.75)
-                status = "PASS" if score >= threshold else "FAIL"
-                lines.append(f"| {metric} | {score:.3f} | {threshold:.2f} | {status} |")
-            lines.append(f"\n**Composite score: {results.get('composite_score', 0):.3f}**")
-            return "\n".join(lines)
         """
-        # TODO: implement
-        pass
+        lines = [
+            "# RAGAS Evaluation Report",
+            "",
+            "| Metric | Score | Threshold | Status |",
+            "|--------|-------|-----------|--------|",
+        ]
+        thresholds = {
+            "faithfulness":      0.85,
+            "answer_relevance":  0.80,
+            "context_precision": 0.75,
+        }
+        for metric, score in results.items():
+            if metric == "composite_score":
+                continue
+            threshold = thresholds.get(metric, 0.75)
+            status = "PASS" if score >= threshold else "FAIL"
+            lines.append(f"| {metric} | {score:.3f} | {threshold:.2f} | {status} |")
+        lines.append(f"\n**Composite score: {results.get('composite_score', 0):.3f}**")
+        return "\n".join(lines)
 
     def evaluate_single(
         self,
@@ -192,12 +180,8 @@ class RAGASEvaluator:
 
         Returns:
             Dict of metric scores for this sample.
-
-        How to implement:
-            return self.evaluate_dataset(
-                [question], [answer], [context],
-                [ground_truth] if ground_truth else None,
-            )
         """
-        # TODO: implement
-        pass
+        return self.evaluate_dataset(
+            [question], [answer], [context],
+            [ground_truth] if ground_truth else None,
+        )

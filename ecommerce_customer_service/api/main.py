@@ -29,6 +29,7 @@ Run command:
 from __future__ import annotations
 
 import logging
+import threading
 import time
 import uuid
 from contextlib import asynccontextmanager
@@ -42,9 +43,14 @@ from config import settings
 from graph.agent_graph import init_graph
 from message_queue.message_queue import RedisQueue
 from message_queue.worker import QueueWorker
+from memory.short_term import ShortTermMemory
 import redis
 
 logger = logging.getLogger(__name__)
+
+# Module-level session store for short-term memory (protected by lock)
+session_store: dict[str, ShortTermMemory] = {}
+session_store_lock = threading.Lock()
 
 
 # --------------------------------------------------------------------------- #
@@ -278,36 +284,6 @@ async def chat(
     Accepts a user query, runs it through the multi-agent graph, and returns
     the final answer with metadata.
 
-    How to implement:
-        import time
-        request_id = f"req_{uuid.uuid4().hex[:8]}"
-        start = time.monotonic()
-        try:
-            result = graph.invoke({
-                "query":      request.query,
-                "user_id":    request.user_id,
-                "session_id": request.session_id,
-                "history":    request.history,
-            })
-            latency = (time.monotonic() - start) * 1000
-
-            # Save conversation turn to short-term memory (background task)
-            background_tasks.add_task(
-                update_short_term_memory,
-                request.session_id, request.query, result.get("final_answer")
-            )
-
-            return ChatResponse(
-                answer     = result.get("final_answer", "抱歉，暂时无法处理您的请求。"),
-                intent     = result.get("intent", "unknown"),
-                latency_ms = round(latency, 1),
-                request_id = request_id,
-                session_id = request.session_id,
-            )
-        except Exception as e:
-            logger.exception("Error processing chat request %s", request_id)
-            raise HTTPException(status_code=500, detail=f"Internal error: {e}")
-
     Queue mode (when settings.USE_QUEUE is True):
         Instead of invoking graph directly:
         1. Push request to queue with request_id.
@@ -315,9 +291,34 @@ async def chat(
         3. Client polls GET /result/{request_id} for the answer.
         (Implement the result polling endpoint separately.)
     """
-    # TODO: implement
-    pass
+    request_id = f"req_{uuid.uuid4().hex[:8]}"
+    start = time.monotonic()
+    try:
+        result = graph.invoke({
+            "query":      request.query,
+            "user_id":    request.user_id,
+            "session_id": request.session_id,
+            "history":    request.history,
+        })
+        latency = (time.monotonic() - start) * 1000
 
+        # Save conversation turn to short-term memory (background task)
+        background_tasks.add_task(
+            update_short_term_memory,
+            request.session_id, request.query, result.get("final_answer")
+        )
+
+        return ChatResponse(
+            answer     = result.get("final_answer", "抱歉，暂时无法处理您的请求。"),
+            intent     = result.get("intent", "unknown"),
+            latency_ms = round(latency, 1),
+            request_id = request_id,
+            session_id = request.session_id,
+        )
+    except Exception as e:
+        logger.exception("Error processing chat request %s", request_id)
+        raise HTTPException(status_code=500, detail=f"Internal error: {e}")
+    
 
 @app.get(
     "/health",
@@ -330,29 +331,25 @@ async def health() -> HealthResponse:
     Liveness probe endpoint.
 
     Returns system health status including Milvus connectivity and queue depth.
-
-    How to implement:
-        milvus_ok = False
-        try:
-            from pymilvus import connections
-            milvus_ok = connections.has_connection("default")
-        except Exception:
-            pass
-
-        queue_size = 0
-        try:
-            queue_size = app.state.queue.size()
-        except Exception:
-            pass
-
-        return HealthResponse(
-            status           = "ok",
-            milvus_connected = milvus_ok,
-            queue_size       = queue_size,
-        )
     """
-    # TODO: implement
-    pass
+    milvus_ok = False
+    try:
+        from pymilvus import connections
+        milvus_ok = connections.has_connection("default")
+    except Exception:
+        pass
+
+    queue_size = 0
+    try:
+        queue_size = app.state.queue.size()
+    except Exception:
+        pass
+
+    return HealthResponse(
+        status           = "ok",
+        milvus_connected = milvus_ok,
+        queue_size       = queue_size,
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -374,8 +371,13 @@ def update_short_term_memory(session_id: str, query: str, answer: str) -> None:
         (keyed by session_id), then call add_turn() for both user and assistant.
         Use a module-level dict protected by threading.Lock for thread safety.
     """
-    # TODO: implement
-    pass
+    with session_store_lock:
+        stm = session_store.get(session_id)
+        if stm is None:
+            stm = ShortTermMemory(max_turns=20)  # or use settings
+        stm.add_turn("user", query)
+        stm.add_turn("assistant", answer)
+        session_store[session_id] = stm
 
 
 # --------------------------------------------------------------------------- #

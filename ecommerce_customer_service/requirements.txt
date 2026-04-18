@@ -42,8 +42,8 @@ jieba==0.42.1                  # Chinese word segmentation for BM25 tokenisation
 # -----------------------------------------------------------------------------
 # Evaluation
 # -----------------------------------------------------------------------------
-ragas==0.2.6                   # RAG evaluation (faithfulness, relevance, precision)
-datasets==3.2.0                # HuggingFace datasets (used by RAGAS)
+ragas==0.4.3                   # RAG evaluation (faithfulness, relevance, precision)
+datasets==4.8.4                # HuggingFace datasets (used by RAGAS)
 
 # -----------------------------------------------------------------------------
 # Message queue

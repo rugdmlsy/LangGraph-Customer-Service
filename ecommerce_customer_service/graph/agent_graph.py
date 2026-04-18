@@ -289,42 +289,6 @@ def init_graph(settings: Any = None) -> Any:
 
     Returns:
         The compiled graph (also stored as module-level singleton).
-
-    How to implement:
-        global _compiled_graph_singleton
-
-        from config import settings as cfg
-        if settings is None:
-            settings = cfg
-
-        # Initialise LLM
-        from langchain_openai import ChatOpenAI
-        llm = ChatOpenAI(
-            base_url=settings.LLM_API_BASE,
-            api_key=settings.LLM_API_KEY,
-            model=settings.LLM_MODEL_NAME,
-            temperature=settings.LLM_TEMPERATURE,
-            max_tokens=settings.LLM_MAX_TOKENS,
-        )
-
-        # Initialise RAG components
-        from rag import Embedder, KnowledgeBase, SlidingWindowChunker, Retriever
-        embedder = Embedder(settings.EMBEDDING_MODEL_NAME)
-        chunker  = SlidingWindowChunker(settings.CHUNK_SIZE, settings.CHUNK_OVERLAP)
-        kb       = KnowledgeBase(embedder, chunker, settings.MILVUS_HOST, settings.MILVUS_PORT)
-        kb.connect()
-        retriever = Retriever(kb, embedder, settings.RERANKER_MODEL_NAME)
-
-        # Initialise agents
-        from agents import RouterAgent, FAQAgent, OrderAgent, ResponseAgent
-        from tools import ALL_TOOLS
-        router   = RouterAgent(llm)
-        faq      = FAQAgent(llm, retriever)
-        order    = OrderAgent(llm, ALL_TOOLS)
-        response = ResponseAgent(llm)
-
-        _compiled_graph_singleton = build_graph(router, faq, order, response)
-        return _compiled_graph_singleton
     """
     global _compiled_graph_singleton
 

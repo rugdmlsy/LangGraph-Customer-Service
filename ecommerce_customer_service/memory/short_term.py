@@ -40,7 +40,7 @@ class ShortTermMemory:
         print(mem.to_prompt_string())
     """
 
-    def __init__(self, max_turns: int = 10) -> None:
+    def __init__(self, max_turns: int = 50) -> None:
         """
         Initialise the short-term memory buffer.
 
