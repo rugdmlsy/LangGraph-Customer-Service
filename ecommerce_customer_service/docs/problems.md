@@ -1,1 +1,0 @@
-Missing pkg_resources module - pymilvus 2.4.9 requires pkg_resources from setuptools, but setuptools 68+ no longer bundles it. Fixed by downgrading setuptools to 67.8.0.

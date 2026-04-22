@@ -164,6 +164,7 @@ class RouterAgent:
         Returns:
             Rewritten query string, e.g.
             "查询订单 ORD-20240310-001 的物流状态"
+            "查询用户 USER-12345 最近一次订单的物流状态"
 
         How to implement:
             1. Build a system prompt that instructs the LLM to:
@@ -244,42 +245,22 @@ class RouterAgent:
     # Step 3 – LangGraph node                                                 #
     # ---------------------------------------------------------------------- #
 
-    def route(self, state: dict) -> str:
+    def route(self, state: dict) -> dict:
         """
-        LangGraph node function.  Reads from `state`, rewrites the query,
-        classifies intent, updates state, and returns the name of the next node.
+        LangGraph node function. Rewrites the query, classifies intent, and
+        returns a partial state dict. Routing is handled by conditional edges
+        in agent_graph.py which read state["intent"].
 
         Args:
             state: AgentState TypedDict (see graph/agent_graph.py).
-                   Relevant keys: "query", "history", "user_id".
+                   Relevant keys: "query", "history".
 
         Returns:
-            String name of the next graph node, one of:
-            "faq_agent", "order_agent", "response_agent".
-
-        How to implement:
-            1. Extract query = state["query"] and history = state.get("history", []).
-            2. Call self.rewrite_query(query, history) → rewritten.
-            3. Update state["rewritten_query"] = rewritten.
-            4. Call self.classify_intent(rewritten) → intent.
-            5. Update state["intent"] = intent.value.
-            6. Log the routing decision at INFO level.
-            7. Use a mapping dict to convert IntentType → node name string.
-               FAQ      → "faq_agent"
-               ORDER    → "order_agent"
-               LOGISTICS→ "order_agent"   # OrderAgent handles all tool calls
-               REFUND   → "order_agent"
-               UNKNOWN  → "response_agent"
-            8. Return the node name string (LangGraph uses this for edge routing).
-
-        Note: LangGraph passes `state` as a dict; mutate it in-place and
-        return the routing key so conditional_edges can pick the right branch.
+            Partial state dict with "rewritten_query" and "intent" keys.
         """
         query = state["query"]
         history = state.get("history", [])
         rewritten = self.rewrite_query(query, history)
-        state["rewritten_query"] = rewritten
         intent = self.classify_intent(rewritten)
-        state["intent"] = intent.value
-        logger.info(f"Routing query '{rewritten}' with intent '{intent.value}'")
-        return self.routing_map[intent]
+        logger.info("Routing query '%s' with intent '%s'", rewritten, intent.value)
+        return {"rewritten_query": rewritten, "intent": intent.value}

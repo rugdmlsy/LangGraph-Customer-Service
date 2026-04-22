@@ -109,11 +109,26 @@ class MockOrderService:
     }
 
     def __init__(self) -> None:
-        """
-        Initialise with seed data.
-        """
-        self.orders = dict(_SEED_ORDERS)   # shallow copy of seed data
+        self.orders = dict(_SEED_ORDERS)
         self.refunds = dict(_SEED_REFUNDS)
+        self._load_from_redis()
+
+    def _load_from_redis(self) -> None:
+        """Load seeded orders and refunds from Redis (mock:order:* / mock:refund:*)."""
+        try:
+            import json
+            import redis as _redis
+            r = _redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
+            for key in r.keys("mock:order:*"):
+                order = json.loads(r.get(key))
+                self.orders[order["order_id"]] = order
+            for key in r.keys("mock:refund:*"):
+                refund = json.loads(r.get(key))
+                self.refunds[refund["refund_id"]] = refund
+            extra = len(self.orders) - len(_SEED_ORDERS)
+            logger.info("Loaded %d extra orders from Redis", extra)
+        except Exception as exc:
+            logger.debug("Redis seed load skipped: %s", exc)
 
     def get_order(self, order_id: str) -> dict:
         """

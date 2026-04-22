@@ -98,9 +98,6 @@ class ResponseAgent:
         if not has_tool and not has_rag:
             return "I'm sorry, I couldn't find relevant information to answer \
                     your question. Please contact our support team for further assistance."
-        if "error" in [res.get("result", {}).get("status") for res in tool_results]:
-            return "I'm sorry, there was an issue retrieving some information. \
-                    Please contact our support team for further assistance."
         tool_results_str = "None"
         if has_tool:
             tool_summaries = []
@@ -113,19 +110,20 @@ class ResponseAgent:
         if has_rag:
             rag_summaries = []
             for doc in rag_results:
-                title = doc.get("metadata", {}).get("title", "Untitled")
-                snippet = doc.get("snippet", "")
-                rag_summaries.append(f"{title}: {snippet}")
-            rag_results_str = "\n".join(rag_summaries)
-        self.synthesis_prompt.append(
+                source = doc.get("source", doc.get("metadata", {}).get("title", ""))
+                text = doc.get("text", doc.get("snippet", ""))
+                rag_summaries.append(f"{source}: {text}" if source else text)
+            rag_results_str = "\n---\n".join(rag_summaries)
+        messages = self.synthesis_prompt + [
             ("user", f"User query: {query}\n\n"
-                     f"Tool results: {tool_results_str if has_tool else 'None'}\n\n"
-                     f"RAG results: {rag_results_str if has_rag else 'None'}\n\n"
-                     "Please synthesise a single coherent answer based on the above information."))
-        response = self.llm.invoke(self.synthesis_prompt)
+                     f"Tool results: {tool_results_str}\n\n"
+                     f"RAG results: {rag_results_str}\n\n"
+                     "Please synthesise a single coherent answer based on the above information.")
+        ]
+        response = self.llm.invoke(messages)
         final_answer = response.content.strip()
-        if not final_answer.endswith(('.', '?')):
-            final_answer += '.'
+        if not final_answer.endswith(('.', '?', '！', '。', '？')):
+            final_answer += '。'
         return final_answer
     
     # ---------------------------------------------------------------------- #
@@ -160,7 +158,9 @@ class ResponseAgent:
         tool_results = state.get("tool_results", [])
         rag_results = state.get("rag_results", [])
         history = state.get("history", [])
-        if state.get("needs_synthesis") is False and "final_answer" in state:
-            return {"final_answer": state["final_answer"]}
+        # Pass through when an upstream agent already produced an answer
+        existing = state.get("final_answer", "")
+        if existing:
+            return {"final_answer": existing}
         answer = self.synthesize(query, tool_results, rag_results, history)
         return {"final_answer": answer}

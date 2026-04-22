@@ -86,17 +86,7 @@ class SlidingWindowChunker:
         """
         text_splitter = RecursiveCharacterTextSplitter(
             separators=[
-                "\n\n",
                 "\n",
-                " ",
-                ".",
-                ",",
-                "\u200b",  # Zero-width space
-                "\uff0c",  # Fullwidth comma
-                "\u3001",  # Ideographic comma
-                "\uff0e",  # Fullwidth full stop
-                "\u3002",  # Ideographic stop
-                "",
             ],
             chunk_size=self.chunk_size, chunk_overlap=self.overlap,
         )

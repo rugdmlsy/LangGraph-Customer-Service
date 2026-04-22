@@ -3,32 +3,31 @@ rag/knowledge_base.py
 
 Knowledge base management backed by Milvus vector database.
 
-This module owns the full ingestion pipeline:
-    raw file → chunk → embed → insert into Milvus → build index → ready to query
+Ingestion pipeline:
+    raw file → chunk → embed (dense + sparse) → insert into Milvus → build index
 
-Milvus concepts used here:
-    Collection: analogous to a SQL table; stores vectors + scalar metadata fields.
-    Index:      HNSW graph built on the vector field for ANN search.
-                IVF_FLAT is an alternative with lower memory footprint.
-    Partition:  (optional) logical sub-collections within one collection;
-                use to separate FAQ, manual, and chat history data sources.
+Collection schema:
+    id            INT64 primary key (auto_id)
+    text          VARCHAR chunk text
+    source        VARCHAR origin file / URL
+    chunk_id      INT64 position within source doc
+    dense_vector  FLOAT_VECTOR  ANN searched with HNSW + COSINE
+    sparse_vector SPARSE_FLOAT_VECTOR  searched with SPARSE_INVERTED_INDEX + IP
 
-Connection management:
-    Use pymilvus.connections.connect() once at startup (via connect()).
-    PyMilvus maintains a connection pool internally; no manual pooling needed.
+Both fields are indexed for Milvus native hybrid search (AnnSearchRequest + RRFRanker).
 """
 
 from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any
 from pymilvus import connections
 from pymilvus import CollectionSchema, FieldSchema, DataType, Collection
 from pymilvus import utility
 from rag.chunker import SlidingWindowChunker
 from rag.embedder import Embedder
 import fitz, time
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -37,24 +36,16 @@ class KnowledgeBase:
     """
     High-level interface to the Milvus knowledge base.
 
-    Attributes:
-        host:           Milvus server host.
-        port:           Milvus server port.
-        collection_name: Active Milvus collection name.
-        embedder:        Embedder instance for vector generation.
-        chunker:         SlidingWindowChunker instance for document splitting.
-        collection:      pymilvus.Collection object (set after connect()).
-
     Typical usage (ingestion):
         kb = KnowledgeBase(embedder, chunker)
         kb.connect()
-        kb.create_collection("ecommerce_faq", dim=384)
+        kb.create_collection("ecommerce_faq", dim=1024)
         kb.load_from_file("data/raw/faq.txt")
         kb.build_index()
 
     Typical usage (query) — called by Retriever:
         kb.connect()
-        results = kb.collection.search(...)
+        # Retriever uses kb.collection directly via hybrid_search()
     """
 
     def __init__(
@@ -64,48 +55,26 @@ class KnowledgeBase:
         host: str = "localhost",
         port: int = 19530,
         collection_name: str = "ecommerce_faq",
+        batch_size: int = 1000,
     ) -> None:
-        """
-        Initialise the knowledge base manager.
-
-        Args:
-            embedder:        Embedder instance.  Needed by load_from_file().
-            chunker:         SlidingWindowChunker instance.
-            host:            Milvus host (override with settings.MILVUS_HOST).
-            port:            Milvus port.
-            collection_name: Name of the Milvus collection to operate on.
-        """
         self.embedder = embedder
         self.chunker = chunker
         self.host = host
         self.port = port
         self.collection_name = collection_name
-        self.collection = None  # Set after connect()
+        self.collection: Collection | None = None
+        self.batch_size = batch_size
 
     def connect(self) -> None:
-        """
-        Establish connection to the Milvus server.
-
-        Call this once at application startup (e.g. in FastAPI lifespan event).
-        Subsequent calls are safe (idempotent in pymilvus >= 2.3).
-        """
+        """Establish connection to the Milvus server (idempotent)."""
         connections.connect(alias="default", host=self.host, port=self.port)
         logger.info("Connected to Milvus at %s:%s", self.host, self.port)
 
     def create_collection(self, name: str, dim: int) -> None:
         """
-        Create a Milvus collection with the standard FAQ schema.
+        Create the collection with dense + sparse vector fields.
 
-        Schema fields:
-            id        (INT64,  primary key, auto_id=True)
-            text      (VARCHAR, max_length=4096)  — raw chunk text
-            source    (VARCHAR, max_length=512)   — origin file / URL
-            chunk_id  (INT64)                     — position within source doc
-            embedding (FLOAT_VECTOR, dim=dim)     — dense vector
-
-        Args:
-            name: Collection name (stored as self.collection_name).
-            dim:  Embedding dimensionality (must match embedder output).
+        If the collection already exists, loads it without recreating.
         """
         if utility.has_collection(name):
             self.collection = Collection(name)
@@ -113,118 +82,148 @@ class KnowledgeBase:
             logger.info("Loaded existing collection '%s'", name)
             return
         fields = [
-            FieldSchema("id",        DataType.INT64,         is_primary=True, auto_id=True),
-            FieldSchema("text",      DataType.VARCHAR,        max_length=4096),
-            FieldSchema("source",    DataType.VARCHAR,        max_length=512),
-            FieldSchema("chunk_id",  DataType.INT64),
-            FieldSchema("embedding", DataType.FLOAT_VECTOR,   dim=dim),
+            FieldSchema("id",            DataType.INT64,              is_primary=True, auto_id=True),
+            FieldSchema("text",          DataType.VARCHAR,             max_length=65535),
+            FieldSchema("source",        DataType.VARCHAR,             max_length=512),
+            FieldSchema("chunk_id",      DataType.INT64),
+            FieldSchema("dense_vector",  DataType.FLOAT_VECTOR,        dim=dim),
+            FieldSchema("sparse_vector", DataType.SPARSE_FLOAT_VECTOR),
         ]
         schema = CollectionSchema(fields)
-        self.collection = Collection(name=name, schema=schema)
+        self.collection = Collection(name, schema, consistency_level="Session")
         logger.info("Created collection '%s' with dim=%d", name, dim)
 
     def insert(
         self,
         texts: list[str],
-        embeddings: list[list[float]],
+        dense_vectors: list[list[float]],
+        sparse_vectors: list[dict[int, float]],
         metadata: list[dict],
+        flush: bool = False,
     ) -> list[int]:
         """
-        Insert text chunks and their embeddings into the collection.
+        Insert text chunks with their dense and sparse embeddings.
 
         Args:
-            texts:      List of raw chunk strings.
-            embeddings: Parallel list of dense vectors (from Embedder.embed()).
-            metadata:   Parallel list of dicts with keys "source" and "chunk_id".
+            texts:          Raw chunk strings.
+            dense_vectors:  Dense embeddings (from Embedder.embed or embed_hybrid).
+            sparse_vectors: Sparse vectors as list of {token_id: weight} dicts
+                            (from Embedder.embed_sparse or embed_hybrid).
+            metadata:       Parallel list of {"source": str, "chunk_id": int} dicts.
+            flush:          Flush after insert; set False when batching (flush once at end).
 
         Returns:
             List of auto-assigned Milvus primary key IDs.
-            
-        Batch insert tip: for large corpora, call insert() in batches of
-        ~1 000 chunks to avoid gRPC message size limits and OOM errors.
         """
-        data = [
-            texts,
-            [m["source"]   for m in metadata],
-            [m["chunk_id"] for m in metadata],
-            embeddings,
-        ]
         if self.collection is None:
-            self.collection = Collection(self.collection_name)  # lazy load if not connected
-        mr = self.collection.insert(data)
-        self.collection.flush()   # ensure data is persisted to segment
-        return mr.primary_keys
+            self.collection = Collection(self.collection_name)
+
+        all_ids = []
+        total = len(texts)
+
+        for i in range(0, total, self.batch_size):
+            batch_texts   = texts[i : i + self.batch_size]
+            batch_meta    = metadata[i : i + self.batch_size]
+            batch_dense   = dense_vectors[i : i + self.batch_size]
+            batch_sparse  = sparse_vectors[i : i + self.batch_size]
+
+            data = [
+                batch_texts,
+                [m["source"]   for m in batch_meta],
+                [m["chunk_id"] for m in batch_meta],
+                batch_dense,
+                batch_sparse,
+            ]
+            mr = self.collection.insert(data)
+            all_ids.extend(mr.primary_keys)
+
+        if flush:
+            self.collection.flush()
+
+        return all_ids
 
     def build_index(self) -> None:
         """
-        Build the ANN index on the embedding field.
-
-        Must be called after all data is inserted and before collection.search().
-
-        HNSW tuning:
-            M (graph edges per node): higher → better recall, more memory.
-            efConstruction: higher → better index quality, slower build.
-            Recommended: M=16, efConstruction=200 for production;
-            M=8, efConstruction=64 for fast prototyping.
+        Build HNSW index on dense_vector and SPARSE_INVERTED_INDEX on sparse_vector.
+        Must be called after all data is inserted.
         """
-        index_params = {
+        dense_index = {
             "metric_type": "COSINE",
             "index_type":  "HNSW",
             "params": {"M": 16, "efConstruction": 200},
         }
+        sparse_index = {"index_type": "SPARSE_INVERTED_INDEX", "metric_type": "IP"}
         assert self.collection is not None
-        self.collection.create_index(field_name="embedding", index_params=index_params)
+        self.collection.create_index("dense_vector",  dense_index)
+        self.collection.create_index("sparse_vector", sparse_index)
         self.collection.load()
         logger.info("Index built and collection loaded into memory.")
 
     def load_from_file(self, file_path: str | Path) -> int:
         """
-        End-to-end ingestion pipeline: read → chunk → embed → insert.
+        End-to-end ingestion: read file → chunk → embed (dense + sparse) → insert.
 
-        Supports file formats:
-            .txt   — plain text, one document per file
-            .pdf   — PDF documents (requires pdfplumber dependency)
-            to be extended:
-                .jsonl — one JSON object per line with "text" and "source" keys
-                .json  — list of {"text": str, "source": str} objects
-
-        Args:
-            file_path: Path to the input file.
+        Supports .txt and .pdf formats.
 
         Returns:
             Total number of chunks inserted.
         """
         file = Path(file_path)
         if not file.exists():
-            logger.error("File not found: %s", file_path)
             raise FileNotFoundError(f"File not found: {file_path}")
+
+        file_size_mb = file.stat().st_size / (1024 * 1024)
+        print(f"  处理文件: {file.name} ({file_size_mb:.1f} MB)")
         start = time.perf_counter()
+
         if file.suffix == ".pdf":
             with fitz.open(file) as doc:
-                rawtexts = []
-                for page in doc:
-                    rawtexts.append(page.get_text())
-                full_text = "\n".join(rawtexts)
+                full_text = "\n".join(str(page.get_text()) for page in doc)
         elif file.suffix == ".txt":
-            with open(file, "r") as f:
+            with open(file, "r", encoding="utf-8", errors="replace") as f:
                 full_text = f.read()
         else:
-            logger.error("Unsupported file format: %s", file.suffix)
             raise ValueError(f"Unsupported file format: {file.suffix}")
+
         chunks_with_meta = self.chunker.chunk_with_metadata(full_text, str(file))
-        texts = [c["text"] for c in chunks_with_meta]
-        meta = [{"source": c["source"], "chunk_id": c["chunk_id"]} for c in chunks_with_meta]
-        embeddings = self.embedder.embed(texts)
-        self.insert(texts, embeddings, meta)
+        texts = [c["text"]     for c in chunks_with_meta]
+        meta  = [{"source": c["source"], "chunk_id": c["chunk_id"]} for c in chunks_with_meta]
+
+        total_batches = (len(texts) + self.batch_size - 1) // self.batch_size
+        pbar = tqdm(
+            range(0, len(texts), self.batch_size),
+            total=total_batches,
+            desc=f"  Embedding {file.name}",
+            unit="batch",
+            ncols=80,
+        )
+        for i in pbar:
+            batch_texts = texts[i : i + self.batch_size]
+            batch_meta  = meta[i : i + self.batch_size]
+            embeddings  = self.embedder.embed_hybrid(batch_texts)
+            self.insert(
+                batch_texts,
+                embeddings["dense"],
+                embeddings["sparse"],
+                batch_meta,
+                flush=False,
+            )
+            pbar.set_postfix({"chunks": f"{min(i + self.batch_size, len(texts))}/{len(texts)}"})
+
+        assert self.collection is not None
+        self.collection.flush()
         elapsed = time.perf_counter() - start
-        logger.info("Ingested %d chunks from file '%s', elapsed: %.2f seconds",
-                    len(chunks_with_meta), file_path, elapsed)
-        return len(chunks_with_meta)    
+        logger.info(
+            "Ingested %d chunks from '%s' in %.1f s (%.0f chunks/s)",
+            len(chunks_with_meta), file.name, elapsed, len(chunks_with_meta) / max(elapsed, 1),
+        )
+        return len(chunks_with_meta)
 
     def drop_collection(self) -> None:
-        """
-        Drop the collection from Milvus.  Use with caution — data is lost.
-        """
+        """Drop the collection from Milvus. Data is permanently lost."""
         utility.drop_collection(self.collection_name)
         self.collection = None
         logger.warning("Dropped collection '%s'", self.collection_name)
+
+    def has_collection(self, name: str) -> bool:
+        return bool(utility.has_collection(name))

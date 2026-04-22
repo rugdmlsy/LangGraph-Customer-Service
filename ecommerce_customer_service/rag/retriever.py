@@ -1,50 +1,36 @@
 """
 rag/retriever.py
 
-Hybrid retrieval engine with cross-encoder reranking.
+Hybrid retrieval engine using Milvus native hybrid search + cross-encoder reranking.
 
 Retrieval strategy:
-    Stage 1a — Dense ANN search:  query vector vs. Milvus HNSW index.
-    Stage 1b — Sparse BM25 search: keyword overlap via rank_bm25 or
-               Milvus built-in sparse vectors (Milvus 2.4+).
-    Stage 2  — Score fusion: Reciprocal Rank Fusion (RRF) combines
-               both ranked lists into a single candidate set.
-    Stage 3  — Cross-encoder reranking: a fine-tuned cross-encoder
-               (ms-marco-MiniLM-L-6-v2) rescores the top candidates
-               for higher precision.
+    Stage 1  — Milvus hybrid_search: combines dense ANN (HNSW/COSINE) and sparse
+               (SPARSE_INVERTED_INDEX/IP) search server-side via RRFRanker.
+    Stage 2  — Cross-encoder reranking: fine-tuned cross-encoder rescores top
+               candidates for higher precision.
 
-Why hybrid search?
-    Dense search excels at semantic similarity; sparse search excels at
-    exact keyword matching (product names, order IDs).  Neither alone
-    achieves top-5 recall > 85% on e-commerce queries.  Combining them
-    improved recall from 71% to 88% in our experiments.
-
-Why RRF for fusion?
-    RRF(d) = Σ 1 / (k + rank_i(d)) where k=60 is the smoothing constant.
-    It is rank-based (not score-based), so it handles the different score
-    scales of dense and sparse systems without normalisation.
+Why Milvus-native hybrid search over client-side RRF?
+    Server-side fusion avoids transferring full candidate lists over the network
+    and keeps the ID spaces consistent (Milvus auto-IDs, not corpus indices).
 """
 
 from __future__ import annotations
 
 import logging
 from typing import Any
-import jieba
-from rank_bm25 import BM25Okapi
+from pymilvus import AnnSearchRequest, RRFRanker
 
 logger = logging.getLogger(__name__)
 
 
 class Retriever:
     """
-    Hybrid retriever: dense ANN + sparse BM25 + cross-encoder reranker.
+    Hybrid retriever: Milvus dense + sparse search fused with RRF + cross-encoder reranker.
 
     Attributes:
         knowledge_base: KnowledgeBase instance (owns the Milvus collection).
-        embedder:       Embedder for query vectorisation.
-        bm25_index:     BM25Okapi index built from the corpus texts (rank_bm25).
-        reranker:       CrossEncoder model from sentence-transformers.
-        corpus_texts:   List of all chunk texts (needed by BM25 at query time).
+        embedder:       Embedder for query vectorisation (dense + sparse).
+        reranker:       CrossEncoder model (lazy-loaded on first rerank call).
         rrf_k:          RRF smoothing constant (default 60).
     """
 
@@ -55,66 +41,27 @@ class Retriever:
         reranker_model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2",
         rrf_k: int = 60,
     ) -> None:
-        """
-        Initialise the retriever.
-
-        Args:
-            knowledge_base:      KnowledgeBase instance (must already be connected).
-            embedder:            Embedder instance.
-            reranker_model_name: HuggingFace cross-encoder model ID.
-            rrf_k:               RRF smoothing constant.
-        """
         self.knowledge_base = knowledge_base
         self.embedder = embedder
         self.reranker_model_name = reranker_model_name
         self.rrf_k = rrf_k
-        self.bm25_index = None
-        self.corpus_texts = []
         self.reranker = None
-
-    def build_bm25(self, corpus_texts: list[str]) -> None:
-        """
-        Build the BM25 index from the corpus.
-
-        Must be called after the knowledge base is loaded.
-
-        Args:
-            corpus_texts: All chunk texts in the same order as Milvus IDs.
-
-        Note: jieba is needed for Chinese word segmentation.
-        For mixed Chinese/English, segment only Chinese characters and
-        split English tokens by whitespace/punctuation.
-        """
-        tokenized = [list(jieba.cut(t)) for t in corpus_texts]
-        self.bm25_index = BM25Okapi(tokenized)
-        self.corpus_texts = corpus_texts
-        logger.info("BM25 index built on %d documents", len(corpus_texts))
-
 
     def dense_search(self, query_vec: list[float], top_k: int = 10) -> list[dict]:
         """
-        Approximate nearest-neighbour search in Milvus.
-
-        Args:
-            query_vec: Query embedding vector (from Embedder.embed_query()).
-            top_k:     Number of results to return.
+        Dense ANN search in Milvus.
 
         Returns:
-            List of document dicts:
-            [{"id": int, "text": str, "source": str, "score": float}, ...]
-            sorted by descending score (cosine similarity).
-
-        Tuning: increase `ef` (HNSW search-time parameter) for higher recall
-        at the cost of latency.  ef=64 is a good default; ef=128 for ≥95% recall.
+            List of {"id", "text", "source", "score"} dicts sorted by descending score.
         """
         search_params = {"metric_type": "COSINE", "params": {"ef": 64}}
         results = self.knowledge_base.collection.search(
             data=[query_vec],
-            anns_field="embedding",
+            anns_field="dense_vector",
             param=search_params,
             limit=top_k,
-            output_fields=["text", "source", "chunk_id"],
-        )
+            output_fields=["text", "source"],
+        )[0]
         return [
             {
                 "id":     hit.id,
@@ -122,88 +69,74 @@ class Retriever:
                 "source": hit.entity.get("source"),
                 "score":  hit.score,
             }
-            for hit in results[0]
+            for hit in results
         ]
 
     def sparse_search(self, query: str, top_k: int = 10) -> list[dict]:
         """
-        BM25 keyword search over the corpus.
-
-        Args:
-            query: Raw or rewritten user query string (not a vector).
-            top_k: Number of results to return.
+        Sparse search using the Milvus SPARSE_INVERTED_INDEX (IP metric).
 
         Returns:
-            List of document dicts with "score" = BM25 score (higher = more relevant).
-
-        Note: BM25 IDs here are array indices into corpus_texts.  Ensure
-        corpus_texts is in the same order as the Milvus auto-ID sequence,
-        or maintain an id→text mapping dict for reliable lookup.
+            List of {"id", "text", "source", "score"} dicts sorted by descending score.
         """
-        query_tokens = list(jieba.cut(query))
-        assert self.bm25_index is not None, "BM25 index not built. Call build_bm25() first."
-        scores = self.bm25_index.get_scores(query_tokens)
-        top_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:top_k]
+        query_sparse = self.embedder.embed_query_sparse(query)
+        search_params = {"metric_type": "IP", "params": {}}
+        results = self.knowledge_base.collection.search(
+            data=[query_sparse],
+            anns_field="sparse_vector",
+            param=search_params,
+            limit=top_k,
+            output_fields=["text", "source"],
+        )[0]
         return [
             {
-                "id":    top_indices[i],
-                "text":  self.corpus_texts[top_indices[i]],
-                "score": float(scores[top_indices[i]]),
+                "id":     hit.id,
+                "text":   hit.entity.get("text"),
+                "source": hit.entity.get("source"),
+                "score":  hit.score,
             }
-            for i in range(len(top_indices))
+            for hit in results
         ]
 
     def hybrid_search(self, query: str, top_k: int = 10) -> list[dict]:
         """
-        Combine dense and sparse results using Reciprocal Rank Fusion.
+        Milvus native hybrid search: dense + sparse fused server-side with RRFRanker.
 
-        Args:
-            query: User query string.
-            top_k: Number of fused results to return.
+        Uses AnnSearchRequest for each vector field and collection.hybrid_search()
+        to perform server-side RRF fusion, avoiding client-side score normalisation.
 
         Returns:
-            RRF-fused list of document dicts, sorted by descending RRF score.
-
-        How to implement:
-            1. query_vec = self.embedder.embed_query(query)
-            2. dense_docs  = self.dense_search(query_vec, top_k=top_k * 2)
-            3. sparse_docs = self.sparse_search(query, top_k=top_k * 2)
-            4. RRF fusion:
-               score_map = {}
-               for rank, doc in enumerate(dense_docs):
-                   score_map[doc["id"]] = score_map.get(doc["id"], 0) + 1 / (self.rrf_k + rank + 1)
-               for rank, doc in enumerate(sparse_docs):
-                   score_map[doc["id"]] = score_map.get(doc["id"], 0) + 1 / (self.rrf_k + rank + 1)
-            5. Sort by RRF score descending; take top_k.
-            6. Rebuild doc dicts (need to look up text from id).
-            7. Return fused list.
-
-        Alternative: use Milvus 2.4 native hybrid search with WeightedRanker
-        or RRFRanker for server-side fusion (lower network overhead).
+            List of {"id", "text", "source", "score"} dicts sorted by descending RRF score.
         """
-        query_vec = self.embedder.embed_query(query)
-        dense_docs  = self.dense_search(query_vec, top_k=top_k * 2)
-        sparse_docs = self.sparse_search(query, top_k=top_k * 2)
-        score_map = {}
-        doc_map = {}  # Map doc_id -> doc for text lookup
-        for rank, doc in enumerate(dense_docs):
-            doc_id = doc["id"]
-            score_map[doc_id] = score_map.get(doc_id, 0) + 1 / (self.rrf_k + rank + 1)
-            if doc_id not in doc_map:
-                doc_map[doc_id] = doc
-        for rank, doc in enumerate(sparse_docs):
-            doc_id = doc["id"]
-            score_map[doc_id] = score_map.get(doc_id, 0) + 1 / (self.rrf_k + rank + 1)
-            if doc_id not in doc_map:
-                doc_map[doc_id] = doc
-        fused_docs = sorted(score_map.items(), key=lambda x: x[1], reverse=True)[:top_k]
+        query_dense  = self.embedder.embed_query(query)
+        query_sparse = self.embedder.embed_query_sparse(query)
+
+        dense_req = AnnSearchRequest(
+            data=[query_dense],
+            anns_field="dense_vector",
+            param={"metric_type": "COSINE", "params": {"ef": 64}},
+            limit=top_k,
+        )
+        sparse_req = AnnSearchRequest(
+            data=[query_sparse],
+            anns_field="sparse_vector",
+            param={"metric_type": "IP", "params": {}},
+            limit=top_k,
+        )
+        results = self.knowledge_base.collection.hybrid_search(
+            reqs=[dense_req, sparse_req],
+            rerank=RRFRanker(k=self.rrf_k),
+            limit=top_k,
+            output_fields=["text", "source"],
+        )[0]
         return [
             {
-                "id": doc_id,
-                "text": doc_map.get(doc_id, {}).get("text", ""),
-                "score": score_map[doc_id],
+                "id":     hit.id,
+                "text":   hit.entity.get("text"),
+                "source": hit.entity.get("source"),
+                "score":  hit.score,
             }
-            for doc_id, _ in fused_docs
+            for hit in results
         ]
 
     def rerank(self, query: str, docs: list[dict], top_n: int = 3, method: str = "Cross-Encoder") -> list[dict]:
@@ -211,40 +144,22 @@ class Retriever:
         Rerank candidate documents using a cross-encoder model.
 
         Args:
-            query:  User query (the rewritten version for best results).
+            query:  User query string.
             docs:   Candidate documents from hybrid_search().
             top_n:  Number of documents to return after reranking.
-            method: Reranking method to use. Defaults to "Cross-Encoder". 
-                Candidates: RRF, RankLLM, Cross-Encoder, ColBERT
+            method: Reranking method ("Cross-Encoder" only currently).
 
         Returns:
-            Top-n documents, re-sorted by cross-encoder relevance score.
-
-        How to implement:
-            1. Lazy-load the cross-encoder:
-               if self.reranker is None:
-                   from sentence_transformers import CrossEncoder
-                   self.reranker = CrossEncoder(self.reranker_model_name)
-            2. Prepare pairs: [(query, doc["text"]) for doc in docs]
-            3. scores = self.reranker.predict(pairs)  # numpy array
-            4. Re-sort docs by score descending; take top_n.
-            5. Attach "rerank_score" to each doc dict.
-            6. Return top_n docs.
-
-        Latency note:
-            Cross-encoder inference is O(n) where n = len(docs).  Keep the
-            reranker input at ≤ 20 candidates (from hybrid_search top-20)
-            to stay under 200 ms total retrieval latency on CPU.
+            Top-n documents re-sorted by cross-encoder relevance score,
+            each with an added "rerank_score" field.
         """
-        if method == "Cross-Encoder":
-            if self.reranker is None:
-                from sentence_transformers import CrossEncoder
-                self.reranker = CrossEncoder(self.reranker_model_name)
-            pairs = [(query, doc["text"]) for doc in docs]
-            scores = self.reranker.predict(pairs)
-            for doc, score in zip(docs, scores):
-                doc["rerank_score"] = float(score)
-            reranked_docs = sorted(docs, key=lambda d: d["rerank_score"], reverse=True)[:top_n]
-            return reranked_docs
-        else:
+        if method != "Cross-Encoder":
             raise NotImplementedError(f"Reranking method '{method}' not implemented.")
+        if self.reranker is None:
+            from sentence_transformers import CrossEncoder
+            self.reranker = CrossEncoder(self.reranker_model_name)
+        pairs = [(query, doc["text"]) for doc in docs]
+        scores = self.reranker.predict(pairs)
+        for doc, score in zip(docs, scores):
+            doc["rerank_score"] = float(score)
+        return sorted(docs, key=lambda d: d["rerank_score"], reverse=True)[:top_n]

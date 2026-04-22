@@ -215,11 +215,12 @@ class OrderAgent:
             5. Return {"tool_results": tool_results, "final_answer": final_text}.
             6. On LLM error, return a graceful error message and empty tool_results.
         """
+        import json
+        from langchain_core.messages import ToolMessage
+
         query = state.get("rewritten_query") or state["query"]
-        intent = state.get("intent", "UNKNOWN")
         history = state.get("history", [])
-        user_id = state.get("user_id", "anonymous")
-        messages = [("system", self.system_prompt)] + history + [("user", query)]
+        messages: list = [("system", self.system_prompt)] + history + [("user", query)]
         tool_results = []
         try:
             ai_message = None
@@ -227,18 +228,18 @@ class OrderAgent:
                 ai_message = self.llm_with_tools.invoke(messages)
                 if not ai_message.tool_calls:
                     break
-                for tool_call in ai_message.tool_calls:
-                    tool_name = tool_call.name
-                    args = tool_call.args
-                    result = self.execute_tool(tool_name, args)
-                    tool_results.append({"tool": tool_name, "args": args, "result": result})
-                    messages.append(("tool", f"{tool_name}({args}) → {result}"))
-                messages.append(("ai", ai_message.content))
-            final_answer = ai_message.content.strip() if ai_message else ""
-            if not final_answer.endswith(('.', '?')):
-                final_answer += '.'
+                messages.append(ai_message)
+                for tc in ai_message.tool_calls:
+                    result = self.execute_tool(tc["name"], tc["args"])
+                    tool_results.append({"tool": tc["name"], "args": tc["args"], "result": result})
+                    messages.append(ToolMessage(
+                        content=json.dumps(result, ensure_ascii=False),
+                        tool_call_id=tc["id"],
+                    ))
+            final_answer = (ai_message.content or "").strip() if ai_message else ""
+            if final_answer and not final_answer[-1] in ".?!。？！":
+                final_answer += "。"
             return {"tool_results": tool_results, "final_answer": final_answer}
         except Exception as e:
-            logger.error(f"Error during ReAct loop: {repr(e)}")
-            return {"tool_results": [], "final_answer": "I'm sorry, there was an issue \
-                    processing your request. Please contact our support team for assistance."}
+            logger.error("Error during ReAct loop: %s", repr(e))
+            return {"tool_results": [], "final_answer": "抱歉，处理您的请求时出现了问题，请联系人工客服。"}

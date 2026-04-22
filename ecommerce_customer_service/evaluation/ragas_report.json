@@ -1,0 +1,715 @@
+{
+  "timestamp": "2026-04-21T23:48:11.651065",
+  "test_file": "data/test/扫地机器人100问2.txt",
+  "n_samples": 100,
+  "n_failed": 0,
+  "eval_time_sec": 705.5,
+  "scores": {
+    "faithfulness": 0.9421,
+    "answer_relevancy": 0.6593,
+    "context_precision": 0.5458,
+    "composite_score": 0.7157
+  },
+  "per_sample": [
+    {
+      "question": "机器人可以恢复出厂设置吗？怎么操作？",
+      "answer": "机器人可以恢复出厂设置。操作方法如下：\n\n1.  **通过APP操作**：在APP的【清扫设置】中点击“恢复默认”，所有吸力、出水量、清洁次数等参数将恢复为出厂设置。\n2.  **通过机身按钮操作**：按说明书操作复位组合键，需长按足够时间。如果按钮无反应或无法恢复，可能是主板故障，建议联系售后检测。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8064,
+      "context_precision": 0.0
+    },
+    {
+      "question": "拖地后地面有水渍、水痕怎么办？",
+      "answer": "根据提供的文档，解决拖地后地面出现水渍、水痕的方法如下：\n\n1.  **检查并维护拖布**：检查拖布是否脏污或发硬板结，及时清洗或更换拖布（Document 1）。\n2.  **调整机器设置**：调小出水量，并将机器人清扫速度调慢，避免快速拖地留下水痕（Document 1）。\n3.  **针对木地板的处理**：若为木地板，应立即用干布吸干表面水分并开窗通风；后续拖地时调至“干拖”模式或最低档出水量，避免积水（Document 3）。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9218,
+      "context_precision": 0.8333
+    },
+    {
+      "question": "APP无法连接机器人怎么办？",
+      "answer": "根据提供的文档，针对“APP无法连接机器人”或相关控制/绑定问题，可以采取以下措施：\n\n1.  **检查网络与状态**：确认网络连接是否正常，手机与机器人是否连接同一2.4G网络，WiFi密码是否正确，以及机器人是否处于待机状态或配网模式（参考文档1第3、4条；文档2第94条）。\n2.  **检查APP版本**：确认APP是否为最新版本（参考文档1第4条）。\n3.  **执行修复操作**：\n    *   重启路由器和机器人。\n    *   重新输入WiFi密码或重置账号密码。\n    *   更新APP。\n    *   切换网络。\n    *   重启机器人后重新绑定设备，或切换机器人至配网模式（参考文档1第3、4条；文档2第94条）。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7776,
+      "context_precision": 1.0
+    },
+    {
+      "question": "机器人清扫面积与标注不符怎么处理？",
+      "answer": "根据文档1第152条，当APP清扫记录显示错误（如清扫面积与实际不符）时，处理方法为：重新建图，校准定位，清理APP缓存。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.493,
+      "context_precision": 1.0
+    },
+    {
+      "question": "异常报警提示如何处理？",
+      "answer": "查看错误代码，常见问题APP 会有解决方案指引。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.172,
+      "context_precision": 1.0
+    },
+    {
+      "question": "清洁液可以随意添加吗？",
+      "answer": "根据提供的上下文，无法回答“清洁液可以随意添加吗”这个问题。\n\n原因如下：\n1. 文档中提到的产品是可以“清洁口唇”的（Document 1, Document 2, Document 3），但并未明确说明该产品是“清洁液”，也未提及任何关于“添加”该产品的操作或规则。\n2. 文档中出现的“添加了”（Document 3）语境不明，且紧接着讨论的是发货时间和快递问题，与是否可以随意添加清洁液无关。\n3. 文档中提到的“无添加”（Document 1, Document 2）是指产品本身不含添加剂，而非指用户可以随意添加东西。\n\n因此，基于现有上下文，没有信息支持或反驳“清洁液可以随意添加”这一说法。",
+      "faithfulness": null,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0
+    },
+    {
+      "question": "万向轮卡顿、异响怎么解决？",
+      "answer": "根据提供的文档，解决万向轮卡顿、异响的方法如下：\n\n1.  **清理与润滑**：检查驱动轮、万向轮是否缠绕毛发或杂物，若有则进行清理；并在转轴处滴1-2滴专用润滑油（切勿滴多，防止粘灰）。\n2.  **更换部件**：若轮面磨损严重、转动卡顿或出现异响，应直接更换万向轮/驱动轮。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.907,
+      "context_precision": 0.8333
+    },
+    {
+      "question": "大颗粒垃圾（如饼干渣）吸不进去怎么办？",
+      "answer": "根据文档1第39条，对于大颗粒杂物，建议手动清理后再让机器人工作。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.6654,
+      "context_precision": 1.0
+    },
+    {
+      "question": "地毯上的灰尘清理不彻底怎么处理？",
+      "answer": "根据提供的文档，针对地毯区域的处理建议如下：\n\n1.  **设置缓冲区**：在APP中将地毯边缘设置为“缓冲区”，机器人会在距离地毯10cm处停止拖地，仅进行扫地（也可开启拖布抬升功能）。\n2.  **避免湿拖**：通过上述设置或开启拖布抬升功能，确保在地毯上只进行干扫，不进行拖地。\n\n*注：文档中未直接提及“地毯灰尘清理不彻底”的具体增强清扫方案（如增加吸力或次数），仅提供了防止误拖和设置缓冲区的操作指引。对于老旧水泥地的浮灰问题，文档建议开启大吸力模式反复清扫，但该建议明确针对的是“老旧水泥地”，而非地毯。*",
+      "faithfulness": null,
+      "answer_relevancy": 0.6432,
+      "context_precision": 0.0
+    },
+    {
+      "question": "如何查询机器人的保修期限？",
+      "answer": "根据提供的上下文，无法直接查询具体的保修期限。文档中仅提到整机保修范围**一般为1-2年**。",
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0
+    },
+    {
+      "question": "有儿童的家庭使用机器人需要注意什么？",
+      "answer": "根据提供的文档，有儿童的家庭使用机器人需要注意以下几点：\n\n1.  **开启童锁功能**，避免小零件被误吞（Document 1, Document 3）。\n2.  **拖地仅用清水**，避免添加清洁液（Document 2）。\n3.  **拖布每次使用后高温消毒**（Document 2）。\n4.  **机器人机身每日擦拭**（Document 2）。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9677,
+      "context_precision": 0.0
+    },
+    {
+      "question": "漏扫某个区域怎么解决？",
+      "answer": "根据文档1，漏扫某个区域的解决方法是：检查是否设置了禁区，尝试重新建图或手动遥控补扫。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8638,
+      "context_precision": 1.0
+    },
+    {
+      "question": "镜面、玻璃旁机器人建图错乱怎么解决？",
+      "answer": "根据提供的文档，解决镜面或玻璃旁机器人建图错乱的方法如下：\n\n1.  **清理传感器**：清扫前清理机器人避障传感器，并每周擦拭传感器，以避免反光导致建图错乱（参考 Document 1 第15条）。\n2.  **遮挡反光物与重新建图**：如果因强光干扰或反光物导致建图错乱，应遮挡反光物，然后重新建图（参考 Document 2 第144条）。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9512,
+      "context_precision": 0.5
+    },
+    {
+      "question": "禁区设置后机器人仍进入怎么办？",
+      "answer": "根据文档1第23条，处理步骤如下：\n\n1.  **检测**：检查禁区边界是否设置准确，机器人是否识别新地图，以及是否开启了临时禁区取消功能。\n2.  **修复**：调整禁区范围，重新识别地图，并关闭临时取消功能。",
+      "faithfulness": 0.8571,
+      "answer_relevancy": 0.2696,
+      "context_precision": 1.0
+    },
+    {
+      "question": "建图不完整、地图错乱怎么解决？",
+      "answer": "根据文档1第13条，解决建图不完整、地图错乱的方法是：遮挡反光物，清理移动障碍物，删除旧地图重新建图。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9095,
+      "context_precision": 1.0
+    },
+    {
+      "question": "如何延长扫地机器人的使用寿命？",
+      "answer": "根据提供的文档，延长扫地机器人使用寿命的方法包括：\n\n1.  **日常使用与操作**：\n    *   遵循“轻用轻放、及时清理”原则，减少配件磨损。\n    *   使用前检查地面，移除尖锐硬物、电线和绳子，避免卡死或缠绕。\n    *   严格按机型说明使用，不超重负载，不在超出清扫面积的环境工作。\n    *   出现轻微异响或卡顿时立即停机检查，切勿强行使用。\n\n2.  **清洁与维护**：\n    *   **主刷**：每次清扫后立即清理毛发和线头（用剪刀剪断，勿强行拉扯）；若出现打滑，检查并清洁或更换滚刷胶条。\n    *   **边刷**：每日清理灰尘和杂物。\n    *   **内部清洁**：每周拆解主刷滚刷仓，彻底清理灰尘和毛发。\n    *   **滤网与尘盒**：堵塞时及时清理，防止吸力下降导致电机超负荷烧毁。\n    *   **防缠绕梳齿**：每月检查，确保无变形、断裂且能正常梳理毛发。\n    *   **漏水处理**：拖布或水箱漏水时立即停机清理，防止电路短路。\n\n3.  **电池保养**：\n    *   充电时遵循“浅充浅放”，避免过充或过放。\n    *   长期存放前将电量充至80%-90%，避免亏电存放损坏电池。\n\n4.  **长期存放维护**：\n    *   存放前全面清理机身及所有配件（尘盒、滤网、主刷、边刷、拖布等），确保无灰尘污渍。\n    *   扫拖一体机器人需排空水箱和污水仓水分，擦干晾干。\n    *   拆卸可拆卸配件（如拖布、集尘袋、滤网），清洗晾干后单独存放，避免滋生细菌。\n    *   擦拭电池仓、充电触点和传感器，保证无灰尘和水渍。",
+      "faithfulness": null,
+      "answer_relevancy": 0.796,
+      "context_precision": 1.0
+    },
+    {
+      "question": "机器人配件在哪里购买？",
+      "answer": "根据提供的上下文，无法回答机器人配件在哪里购买。\n\n文档1仅列出了机器人配件（如水箱出水阀、防撞条、润滑油等）的更换和维护建议；文档2和文档3涉及的是茶具配件的库存和发货咨询，与机器人配件无关。上下文中未包含机器人配件的购买渠道信息。",
+      "faithfulness": 0.7143,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0
+    },
+    {
+      "question": "滤网堵塞会有什么症状？如何清理？",
+      "answer": "根据提供的文档，滤网堵塞的症状及清理方法如下：\n\n**症状：**\n*   触发“污水仓滤网堵塞”报警（Document 1）。\n*   触发“滤网堵塞报警”，且清理后可能仍提示该报警（Document 2）。\n\n**清理方法：**\n*   **污水仓滤网：** 拆卸滤网，用清水冲洗表面的杂物和污渍，晾干后装回。建议定期清理以避免再次堵塞（Document 1）。\n*   **风道滤网：** 每3-6个月清理一次；若堵塞严重需提前更换（Document 3）。\n*   **集尘座滤网（集尘款）：** 每月清理；若破损或堵塞严重需提前更换（Document 3）。\n*   **其他处理：** 如果清理后仍提示堵塞报警，需检查滤网是否彻底清理干净、是否破损，并擦拭传感器或重启机器人；若滤网破损则需更换（Document 2）。",
+      "faithfulness": null,
+      "answer_relevancy": 0.7915,
+      "context_precision": 0.0
+    },
+    {
+      "question": "驱动轮打滑、不转怎么处理？",
+      "answer": "根据提供的文档，针对驱动轮打滑和不转的处理方法如下：\n\n**1. 驱动轮不转（单侧或双侧）：**\n*   **检测：** 检查驱动轮是否缠绕杂物，电机是否故障，线路是否松动。\n*   **修复：** 清理杂物；若涉及电机或线路问题，需联系售后进行检测。\n\n**2. 驱动轮打滑（如在瓷砖地面）：**\n*   **检测：** 检查驱动轮是否磨损，地面是否有水渍。\n*   **修复：** 更换驱动轮，清理地面水渍。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8539,
+      "context_precision": 1.0
+    },
+    {
+      "question": "机器人清扫时路线混乱怎么办？",
+      "answer": "根据文档1第21条，机器人清扫路线混乱的解决方法如下：\n\n1.  **检测**：检查是否开启规划式清扫、地图是否完整、环境是否有新障碍物。\n2.  **修复**：开启规划模式，重新建图，清理新障碍物。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8813,
+      "context_precision": 1.0
+    },
+    {
+      "question": "机器人可以清理床底、沙发底吗？",
+      "answer": "可以。根据文档1第40条，可以通过清理床底、沙发底的缠绕物确保机器人顺利进入，并在APP中对该区域设置“深度拖扫”，增大吸力和拖地次数来优化效果。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8954,
+      "context_precision": 1.0
+    },
+    {
+      "question": "搬家后机器人如何重新使用？",
+      "answer": "根据提供的文档，搬家后重新使用扫拖机器人需要进行以下操作：\n\n1.  **检查与清理**：\n    *   检查机身、拖地模组是否有磕碰损坏。\n    *   清理尘盒、滤网、拖布和传感器。\n    *   （参考长期存放建议）检查电池是否鼓包、漏液，机身配件是否松动、老化；对所有配件进行全面清洗、晾干，更换过期或老化的耗材。\n\n2.  **功能测试与激活**：\n    *   连接充电座充电30分钟，以激活电池并校准电量显示。\n    *   开机空转1-2分钟，检查有无异响、卡顿，测试各项功能是否正常。\n\n3.  **地图与参数设置**：\n    *   删除旧地图，让机器人重新建图。\n    *   校准扫拖参数、避障及回充功能。",
+      "faithfulness": null,
+      "answer_relevancy": 0.8156,
+      "context_precision": 1.0
+    },
+    {
+      "question": "机器人可以清理宠物猫砂、狗砂吗？",
+      "answer": "根据提供的上下文，机器人可以清理宠物猫砂和狗砂。\n\n依据 Document 1 第96条，当出现“拖地时地面残留猫砂、狗砂，无法清理”的故障现象时，建议的修复措施包括调大吸力、开启宠物模式以及调小出水量，这表明在正确设置下机器人具备清理此类物质的能力。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.849,
+      "context_precision": 1.0
+    },
+    {
+      "question": "电池续航越来越短怎么处理？",
+      "answer": "根据文档1和文档2，若电池续航衰减至原续航50%以下，应立即更换原装电池。",
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.8049,
+      "context_precision": 0.0
+    },
+    {
+      "question": "机器人出现异响怎么判断原因？",
+      "answer": "根据提供的文档，判断机器人异响原因的方法如下：\n\n1.  **立即停机检查**：当出现轻微异响时，应立即停机检查，切勿强行使用（Document 1, Document 2）。\n2.  **具体检测步骤**：如果故障现象为“电机轴承异响”且吸力正常，需检测轴承是否生锈或缺油（Document 3）。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9177,
+      "context_precision": 0.0
+    },
+    {
+      "question": "分区清扫无法选择区域怎么解决？",
+      "answer": "根据文档1，分区清扫无法选择区域的解决方法是：重新建图，重启APP，重新设置分区。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9248,
+      "context_precision": 1.0
+    },
+    {
+      "question": "如何绑定多个手机控制同一台机器人？",
+      "answer": "根据提供的上下文，无法回答如何绑定多个手机控制同一台机器人，因为文档中未包含相关信息。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0
+    },
+    {
+      "question": "拖地模式无法开启怎么解决？",
+      "answer": "Based on the provided context, there is no information regarding how to resolve the issue of \"mopping mode cannot be turned on\" (拖地模式无法开启). The documents cover issues such as side brush eccentricity, residual pet litter, motor failure, carpet edge settings, floating dust on old cement floors, collisions near mirrored furniture, main brush stuck, uneven mopping due to high speed, and false APP error prompts, but do not address the inability to enable mopping mode.",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0
+    },
+    {
+      "question": "低温环境下机器人无法开机怎么办？",
+      "answer": "根据文档1第173条，若机器人在低温环境（＜5℃）下无法开机工作，应将机器人移至室温环境静置30分钟，待解冻后充电开机。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9052,
+      "context_precision": 1.0
+    },
+    {
+      "question": "首次使用扫地机器人需要做什么？",
+      "answer": "Based on the provided context, there is no specific information regarding what needs to be done for the **first time** use of a robot vacuum. The documents only provide instructions for daily maintenance, troubleshooting, and checks required after moving house (Document 2, item 98) or regular usage periods.",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0
+    },
+    {
+      "question": "主刷需要多久更换一次？",
+      "answer": "根据文档1，主刷的更换周期取决于类型：\n*   **胶刷**：1-2 年。\n*   **毛刷**：6-12 个月（需检查磨损情况）。",
+      "faithfulness": 0.75,
+      "answer_relevancy": 0.7344,
+      "context_precision": 0.5833
+    },
+    {
+      "question": "可以自行拆解机器人维修吗？",
+      "answer": "不可以。根据文档1第9条，应避免自行拆解机器人内部零件（如电机、主板、电池），故障后需联系官方售后维修。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8427,
+      "context_precision": 1.0
+    },
+    {
+      "question": "“回充传感器故障”报警怎么办？",
+      "answer": "根据提供的文档，针对“回充传感器故障”或相关问题的处理措施如下：\n\n1.  **擦拭传感器**：清理回充传感器上的灰尘（参考文档1第10条、文档2第118条、文档3第91条）。\n2.  **调整充电座位置**：确保充电座摆放平整，并重新摆放以排除遮挡或信号问题（参考文档1第10条、文档2第118条、文档3第91条）。\n3.  **检测传感器功能/信号**：检查充电座红外信号是否正常，或检测传感器本身的功能状态（参考文档1第10条、文档2第118条、文档3第91条）。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.6716,
+      "context_precision": 1.0
+    },
+    {
+      "question": "夏季使用机器人需要注意什么？",
+      "answer": "根据提供的文档，夏季使用机器人需要注意以下几点：\n\n1.  **避免阳光直射**：避免机器人在阳光直射处工作，同时避免阳光直射充电座。\n2.  **保持通风**：确保充电环境通风良好。\n3.  **检查电池温度**：每周检查电池温度，防止过热，因为高温可能影响电池寿命。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9947,
+      "context_precision": 1.0
+    },
+    {
+      "question": "清扫后地面有拖布的毛絮怎么办？",
+      "answer": "Based on the provided context, there is no information regarding how to handle lint or fibers from the mop cloth left on the floor after cleaning. The documents only address issues such as floating dust on old cement floors (Document 1), odors and washing frequency of mop cloths (Document 2), and fine dust remaining due to filter or suction issues (Document 3).",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0
+    },
+    {
+      "question": "忘记APP登录密码怎么办？",
+      "answer": "根据文档3第94条，如果APP登录失败（涉及账号密码问题），修复方法是**重置密码**。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.6812,
+      "context_precision": 0.0
+    },
+    {
+      "question": "木地板上拖地需要注意什么？",
+      "answer": "根据提供的文档，在木地板上拖地需要注意以下几点：\n\n1.  **调节设置**：将出水量调至低档或最低档，并使用“干拖”模式。\n2.  **避免积水**：防止地面积水，若已有水分需立即用干布吸干并通风。\n3.  **定期维护**：每周对机器人轮组进行除尘，以防止泥沙磨损地板。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7979,
+      "context_precision": 1.0
+    },
+    {
+      "question": "如何设置定时清扫？",
+      "answer": "在APP中选择时间、区域和清洁模式，保存为自动化任务。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.5638,
+      "context_precision": 1.0
+    },
+    {
+      "question": "机器人清扫时频繁暂停是什么原因？",
+      "answer": "根据文档1第14条，机器人清扫时频繁暂停的原因可能是：\n\n1. 尘盒满溢\n2. 电量不足\n3. 传感器被遮挡",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9506,
+      "context_precision": 1.0
+    },
+    {
+      "question": "拖布如何清洗和更换？",
+      "answer": "根据提供的文档，拖布的清洗和更换方法如下：\n\n**清洗与消毒：**\n*   **日常清洁：** 每周清理拖布支架上的污渍和水垢，用软毛刷轻刷（Document 3, Item 33）。\n*   **晾干：** 拖地完成后，将拖布支架拆卸下来，放在通风处晾干，避免与机身贴合滋生细菌（Document 3, Item 34）。\n*   **高温消毒：** 拖布使用3-5次后，用高温蒸汽消毒一次，以杀灭细菌和螨虫（Document 1, Item 38; Document 3, Item 38）。\n\n**更换频率：**\n*   对于自动集尘+自动洗拖布机型，建议每3个月更换一次拖布，具体可根据使用频率灵活调整（Document 2, Item 62）。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8472,
+      "context_precision": 0.0
+    },
+    {
+      "question": "多楼层地图无法切换怎么解决？",
+      "answer": "根据提供的上下文，解决多楼层地图无法切换的方法如下：\n\n1.  **检测**：确认机器人是否支持多楼层地图，以及地图是否已单独保存。\n2.  **修复**：为每层楼单独建立地图，并在使用时手动切换地图。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8614,
+      "context_precision": 1.0
+    },
+    {
+      "question": "HEPA滤网可以清洗重复使用吗？",
+      "answer": "不可以。根据文档1，水洗会降低HEPA滤网的过滤效果，建议每3-6个月更换。",
+      "faithfulness": 0.6667,
+      "answer_relevancy": 0.9216,
+      "context_precision": 0.0
+    },
+    {
+      "question": "瓷砖地面有水渍怎么避免？",
+      "answer": "根据提供的文档，关于瓷砖地面水渍的处理和避免方法如下：\n\n1.  **清理缝隙污渍时**：开启“高频振动拖地”功能（部分机型支持），将出水量调至中档，配合专用瓷砖清洁液，多次拖扫缝隙区域（Document 1, Q32）。\n2.  **通用避免积水原则**：后续拖地时调至“干拖”或最低档出水量，避免地面积水；拖地后用干布再擦拭一次，确保地面无积水（Document 1, Q31; Document 3）。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9572,
+      "context_precision": 0.0
+    },
+    {
+      "question": "沿边清扫模式下机器人偏离墙边怎么办？",
+      "answer": "根据提供的上下文，无法回答该问题。\n\n文档中仅提及了“机器人清扫时漏扫边角区域”的故障（Document 2, Item 39），其检测项包括边刷磨损、沿边传感器灰尘及是否开启沿边模式，修复措施为更换边刷、擦拭传感器和开启沿边模式。但上下文中并未包含关于“沿边清扫模式下机器人偏离墙边”这一具体现象的检测或修复方法。",
+      "faithfulness": 0.8,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.5
+    },
+    {
+      "question": "“电池故障”报警怎么处理？",
+      "answer": "Based on the provided context, there is no information regarding how to handle a \"battery fault\" (电池故障) alarm. The documents only cover issues related to suction, mopping system abnormalities, getting stuck, charging dock return, missed areas, firmware upgrades, cleaning solution concentration, black scratches, and sewage tank filter clogs.",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0
+    },
+    {
+      "question": "机器人清扫时会遗漏毛发怎么办？",
+      "answer": "根据文档1第67条，机器人清扫时漏扫宠物毛发的处理方法如下：\n\n1.  **检测**：检查主刷是否为防缠绕款、吸力是否不足、是否开启宠物模式。\n2.  **修复**：更换防缠绕主刷、调大吸力、开启宠物模式。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8929,
+      "context_precision": 1.0
+    },
+    {
+      "question": "避障功能变差，经常碰撞家具怎么解决？",
+      "answer": "根据提供的文档，解决避障功能变差、经常碰撞家具的方法如下：\n\n1.  **清洁与维护**：检查避障摄像头/传感器是否有灰尘或水渍，用干布擦拭；检查防撞条是否卡顿，轻按确认回弹正常（Document 1）。\n2.  **校准与遮挡**：重新校准避障传感器；如果家具为浅色或反光材质，需遮挡家具的反光部位（Document 2）。\n3.  **设置禁区**：对于镜面家具等易因反光误判的情况，可在APP中设置“防撞区”，或用防撞条包裹家具底部（Document 3）。\n4.  **清理环境**：清理机器人周围的障碍物（Document 1）。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9372,
+      "context_precision": 1.0
+    },
+    {
+      "question": "机器人找不到充电座怎么处理？",
+      "answer": "根据提供的文档，机器人找不到充电座的处理方法如下：\n\n1.  **清理障碍物**：清理充电座周围3米内的障碍物（Document 1, Document 2）。\n2.  **清洁传感器**：擦拭回充传感器，确保无灰尘或脏污（Document 1, Document 2, Document 3）。\n3.  **检查充电座状态**：\n    *   确认充电座红外信号是否正常（Document 1）。\n    *   重新摆放充电座，确保其位置平整且未发生变动（Document 1, Document 2, Document 3）。\n4.  **检测硬件故障**：若上述操作无效，需检测回充传感器是否故障或联系售后（Document 1, Document 3）。",
+      "faithfulness": null,
+      "answer_relevancy": 0.949,
+      "context_precision": 1.0
+    },
+    {
+      "question": "“WiFi模块故障”报警怎么办？",
+      "answer": "根据文档1第42条，出现“WiFi模块故障”报警时，应采取以下修复措施：\n\n1. 重启路由器；\n2. 将机器人移至信号强区域；\n3. 更换WiFi模块。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8818,
+      "context_precision": 1.0
+    },
+    {
+      "question": "机器人使用一段时间后吸力下降怎么解决？",
+      "answer": "根据提供的文档，机器人使用一段时间后吸力下降的解决方法如下：\n\n1.  **优先检查并清理堵塞**：检查尘盒、滤网、风道是否堵塞，逐一清理后重试（Document 1, Document 2）。\n2.  **检查集尘袋状态**：如果是集尘款机器人，需避免集尘袋满溢后继续使用，防止灰尘进入电机导致吸力下降；同时每日检查集尘袋安装是否到位、密封严实（Document 2, Document 3）。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8858,
+      "context_precision": 1.0
+    },
+    {
+      "question": "主刷缠绕毛发怎么清理？",
+      "answer": "根据提供的文档，清理主刷缠绕毛发的方法如下：\n\n1.  **立即清理**：每次清扫完成后，立即清理主刷上的毛发和线头（Document 1, Item 1; Document 3, Item 12）。\n2.  **使用工具剪断**用剪刀剪断缠绕物，切勿强行拉扯（Document 1, Item 1）。\n3.  **利用防缠绕设计**：若主刷有防缠绕设计，可利用梳齿快速剥离毛发以提高效率（Document 2, Item 21）。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8585,
+      "context_precision": 1.0
+    },
+    {
+      "question": "机器人开机后直接回充怎么处理？",
+      "answer": "根据提供的文档内容，无法回答“机器人开机后直接回充怎么处理”的问题，因为文中未提及该故障现象及其处理方法。\n\n文档中仅提到以下与回充相关的维护建议：\n1. 每日检查充电座摆放是否平整，周围无杂物遮挡（Document 1, Item 24; Document 2, Item 19）。\n2. 每周清理充电座红外感应区，用干布擦拭，避免灰尘影响回充信号接收（Document 1, Item 25）。",
+      "faithfulness": 0.8889,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0
+    },
+    {
+      "question": "机器人跨越门槛失败怎么办？",
+      "answer": "根据提供的文档，机器人跨越门槛失败的解决方法如下：\n\n1.  **检查与清理**：检测门槛高度是否超过机器人的越障能力，并检查门槛处是否有杂物。如有杂物，需进行清理。\n2.  **手动辅助与记忆**：手动辅助机器人跨越一次，让机器人记忆该位置。\n3.  **联系售后**：如果驱动轮动力不足（针对高度≤2cm的门槛），需联系售后检测驱动轮动力。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9007,
+      "context_precision": 1.0
+    },
+    {
+      "question": "APP中无法查看清扫记录怎么办？",
+      "answer": "根据文档1第59条，若APP无法查看清扫记录，应进行以下检测和修复：\n\n**检测：**\n*   网络是否正常；\n*   机器人是否上传记录；\n*   APP是否为旧版本。\n\n**修复：**\n*   联网同步记录；\n*   更新APP；\n*   重启机器人。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7289,
+      "context_precision": 1.0
+    },
+    {
+      "question": "大户型房屋如何规划清扫？",
+      "answer": "根据文档1第30条，大户型房屋可以将地图分区，分批次对不同区域进行拖扫。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8735,
+      "context_precision": 1.0
+    },
+    {
+      "question": "不同地面清洁效果不一致怎么处理？",
+      "answer": "根据提供的文档，针对不同地面清洁效果不一致的处理方法如下：\n\n1.  **厨房重油污地面**：先开启大吸力模式清理表面杂物，使用专用清洁液配合高档出水量多次拖扫；顽固油污可手动预处理后再让机器人重拖。\n2.  **瓷砖地面缝隙污渍**：开启“高频振动拖地”功能（若机型支持），将出水量调至中档，配合专用瓷砖清洁液，多次拖扫缝隙区域。\n3.  **木地板**：若出现积水或清洁问题，立即用干布吸干水分并通风；后续拖地时调至“干拖”或最低档出水量，避免地面积水。\n4.  **有细小灰尘的地面**：检查并清理/更换堵塞的滤网或磨损的主刷；拖地前先开启“精扫”模式，再进行拖地，避免灰尘被抹开。\n5.  **特殊区域（如防滑垫、地毯）**：在APP中设置“禁拖区”，机器人仅进行扫地而不拖地，以避免吸水发霉或污染物品。",
+      "faithfulness": null,
+      "answer_relevancy": 0.7233,
+      "context_precision": 0.0
+    },
+    {
+      "question": "“碰撞传感器故障”报警如何解决？",
+      "answer": "根据提供的文档，没有直接针对“碰撞传感器故障”报警的特定解决方案。但是，文档中提到了与传感器相关的通用修复方法：\n\n1.  **擦拭传感器**：在多个故障场景（如无法识别充电座、定位丢失、碰撞后改变方向）中，均建议“擦拭传感器”作为修复步骤之一（见文档1第118条，文档2第174条，文档3第156条）。\n2.  **检测传感器功能**：如果涉及充电座识别问题，建议“检测传感器功能”（见文档1第118条）。\n\n因此，基于现有上下文，建议尝试**擦拭传感器**并**检测传感器功能**。",
+      "faithfulness": 0.9,
+      "answer_relevancy": 0.7653,
+      "context_precision": 0.0
+    },
+    {
+      "question": "“传感器异常”报警怎么办？",
+      "answer": "Based on the provided context, there is no specific troubleshooting step listed for a general \"sensor abnormality\" (传感器异常) alarm. However, Document 3, Item 37 states that for **abnormal alarm prompts** (异常报警提示), you should:\n\n1.  Check the error code.\n2.  Refer to the APP for solution guidance regarding common issues.",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7496,
+      "context_precision": 0.0
+    },
+    {
+      "question": "尘盒多久清理一次？",
+      "answer": "根据文档1第29条，尘盒每次使用后清理最佳，至少每2-3次清扫清理一次。此外，文档3第19条也指出每次清扫完成应将尘盒内的垃圾倾倒干净。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8143,
+      "context_precision": 0.0
+    },
+    {
+      "question": "“尘盒未安装”报警但已装尘盒怎么处理？",
+      "answer": "根据文档1第27条，处理步骤如下：\n\n1.  **检测**：检查尘盒是否安装到位，以及尘盒感应传感器是否有灰尘。\n2.  **修复**：重新安装尘盒并扣紧，擦拭感应传感器。",
+      "faithfulness": 0.8,
+      "answer_relevancy": 0.2402,
+      "context_precision": 1.0
+    },
+    {
+      "question": "边角位置清扫不干净怎么办？",
+      "answer": "根据提供的文档，解决边角位置清扫不干净的方法包括：\n\n1.  **检查边刷状态**：如果边刷磨损至刷毛长度小于1cm，应立即更换，以避免影响边角清扫效果（Document 3, 第15条）。\n2.  **选择合适机型或功能**：选择带有动态边刷或方形机身的机型以提升清洁效果（Document 2, 第61条）。\n3.  **开启增强功能**：部分机型支持“边角拖地增强”功能，可在APP中开启（Document 1, 第20条）。\n4.  **手动辅助或使用特定模式**：可手动辅助清理边角，或使用定点拖地模式（Document 1, 第20条）。",
+      "faithfulness": null,
+      "answer_relevancy": 0.5895,
+      "context_precision": 0.3333
+    },
+    {
+      "question": "机器人过保后出现故障怎么办？",
+      "answer": "根据提供的文档，机器人过保后出现故障的处理建议如下：\n\n1.  **维修费用**：费用取决于故障部件。拖布电机、水泵等核心部件费用稍高，滤网、卡扣等小配件费用较低；其中主板维修较贵（Document 1, Document 2）。\n2.  **维修渠道**：建议选择官方售后维修，以保证配件原装（Document 1）。\n3.  **预防建议**：鉴于过保后维修成本较高，建议购买延保服务（Document 2）。",
+      "faithfulness": 0.875,
+      "answer_relevancy": 0.8702,
+      "context_precision": 1.0
+    },
+    {
+      "question": "地毯增压功能不工作怎么处理？",
+      "answer": "根据提供的文档，文中并未提及“地毯增压功能不工作”的具体处理方法。\n\n文档中仅提到在短毛地毯环境下使用地毯增压功能后，需要**检查主刷是否复位**，并每周清理地毯边缘的灰尘以避免漏扫（见 Document 1 第4条和 Document 2 第4条）。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0
+    },
+    {
+      "question": "不同品牌的机器人配件可以通用吗？",
+      "answer": "Based on the provided context, there is no information regarding whether robot accessories from different brands are interchangeable. The documents only mention specific maintenance instructions for a robot (Document 2) and a conversation about purchasing metal parts in bulk versus individually (Documents 1 and 3), but do not address cross-brand compatibility.",
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.5
+    },
+    {
+      "question": "“滚刷故障”报警如何处理？",
+      "answer": "根据提供的上下文，文档中并未直接提及名为“滚刷故障”的特定报警及其处理方法。\n\n但是，针对与滚刷（主刷）相关的常见问题，文档提供了以下处理建议：\n1. **若吸不进去杂物**：清理主刷和边刷的缠绕物，将吸力调至最高档，大颗粒杂物建议手动清理（见 Document 1, Q39）。\n2. **若滚刷仓密封不严漏灰**：检查密封件是否老化、脱落，滚刷仓是否变形；修复方法为更换密封件或联系售后校正滚刷仓（见 Document 2, Q197）。\n3. **若滚刷仓内壁磨损漏灰**：避免清扫硬物，并联系售后更换滚刷仓（见 Document 3, Q166）。",
+      "faithfulness": null,
+      "answer_relevancy": 0.4646,
+      "context_precision": 0.0
+    },
+    {
+      "question": "长毛地毯上机器人无法移动怎么办？",
+      "answer": "根据提供的文档，针对长毛地毯上机器人无法移动（或相关故障）的处理方法如下：\n\n1.  **检查并开启功能**：检测是否开启“地毯增压”功能，若未开启请开启（参考 Document 1, 第35条）。\n2.  **清理杂物**：清理地毯表面的杂物（参考 Document 1, 第35条）。\n3.  **检查驱动轮**：检测驱动轮是否打滑，如有需要更换驱动轮防滑贴（参考 Document 1, 第35条）。\n4.  **清理主刷缠绕**：在长毛地毯上清扫后，立即清理主刷上的地毯纤维，防止缠绕硬化导致运行问题（参考 Document 2, 第12条）。",
+      "faithfulness": 0.8571,
+      "answer_relevancy": 0.8711,
+      "context_precision": 1.0
+    },
+    {
+      "question": "静音模式下吸力变小怎么办？",
+      "answer": "The provided context does not contain any information regarding \"silent mode\" or \"suction power.\" The documents discuss product thickness, absorbency, leakage, and shipping delays. Therefore, the question cannot be answered based on the given context.",
+      "faithfulness": 0.8571,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0
+    },
+    {
+      "question": "定点清扫功能不精准怎么处理？",
+      "answer": "根据文档1（第107条），处理定点清扫不精准的方法如下：\n\n1.  **检测**：检查地图是否完整、定点位置设置是否准确、传感器是否正常。\n2.  **修复**：重新建图、调整定点位置、擦拭传感器。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8186,
+      "context_precision": 1.0
+    },
+    {
+      "question": "“防跌落传感器故障”报警如何解决？",
+      "answer": "根据文档1第20条，解决“防跌落传感器故障”（表现为防跌落功能失效）的方法如下：\n\n1.  **检测**：检查底部防跌落传感器是否有灰尘或是否损坏。\n2.  **修复**：擦拭传感器，并放在平整地面测试；如果传感器损坏，则联系售后更换。",
+      "faithfulness": 0.8571,
+      "answer_relevancy": 0.7607,
+      "context_precision": 1.0
+    },
+    {
+      "question": "手动遥控机器人无反应怎么办？",
+      "answer": "根据文档1第29条，处理步骤如下：\n\n1.  **检测**：检查手机与机器人连接是否正常，是否切换至手动模式，遥控器（若有）是否没电。\n2.  **修复**：重新连接设备，切换手动模式，更换遥控器电池。",
+      "faithfulness": null,
+      "answer_relevancy": 0.1473,
+      "context_precision": 1.0
+    },
+    {
+      "question": "电池长时间不用如何存放？",
+      "answer": "根据提供的文档，电池长时间存放的注意事项如下：\n\n1.  **存放前充电**：将机器人完全充满电至80%-90%，避免亏电存放导致电池损坏。\n2.  **定期补电**：若长期存放（超过1个月），每1-2个月需给机器人补电一次，将电量充至80%-90%。\n3.  **存放姿势**：机器人机身应保持平放，不可倒置或侧放，以防止电池漏液。\n4.  **使用前检查**：长期存放后重新使用前，需检查电池是否鼓包或漏液。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8312,
+      "context_precision": 0.0
+    },
+    {
+      "question": "更换WiFi名称、密码后机器人无法连接怎么办？",
+      "answer": "根据提供的文档，若更换WiFi名称或密码后机器人无法连接，可采取以下措施：\n\n1.  **检查WiFi名称**：确认WiFi名称是否包含特殊字符或为中文。如果机器人不支持中文WiFi或名称含特殊字符，需将WiFi名称修改为英文或数字（参考 Document 2, 第158条）。\n2.  **重新输入密码**：确认WiFi密码是否正确，并重新输入WiFi密码（参考 Document 1, 第3条）。\n3.  **重启设备**：重启路由器和机器人（参考 Document 1, 第3条）。\n4.  **检查网络环境**：确认手机与机器人连接的是同一2.4G网络，且WiFi模块未被遮挡（参考 Document 1, 第3条）。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9525,
+      "context_precision": 0.0
+    },
+    {
+      "question": "集尘袋需要多久更换一次？",
+      "answer": "根据提供的文档，集尘袋的更换频率如下：\n\n*   **普通家庭**：1-2个月更换一次。\n*   **多尘或宠物家庭**：半个月至1个月更换一次。\n*   **其他情况**：当集尘量达到80%时，应及时更换。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8733,
+      "context_precision": 1.0
+    },
+    {
+      "question": "更换手机后如何重新连接机器人？",
+      "answer": "根据提供的文档，更换手机后重新连接机器人的方法如下：\n\n1.  **更新APP**：确保新手机上安装的APP为最新版本（参考 Document 1, 第4条）。\n2.  **重启并重新绑定**：重启机器人，然后在APP中重新绑定设备（参考 Document 1, 第4条）。\n3.  **检查网络**：确认手机与机器人连接在同一2.4G WiFi网络下，且WiFi密码正确（参考 Document 1, 第3条）。",
+      "faithfulness": 0.6667,
+      "answer_relevancy": 0.9728,
+      "context_precision": 0.0
+    },
+    {
+      "question": "“集尘系统故障”报警（自动集尘款）怎么办？",
+      "answer": "根据提供的文档，针对“集尘系统故障”或集尘功能失效的问题，应采取以下措施：\n\n1.  **检查与修复集尘袋**：确认集尘袋是否安装到位（Document 1），若集尘袋满溢则需更换（Document 3）。\n2.  **疏通集尘通道**：检测集尘通道是否堵塞，如有堵塞需进行疏通（Document 1, Document 2, Document 3）。\n3.  **检测集尘电机**：检查集尘电机是否工作或吸力是否不足。若电机不工作需检测电机；若吸力不足，需联系售后检测电机吸力（Document 1, Document 2, Document 3）。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7949,
+      "context_precision": 1.0
+    },
+    {
+      "question": "机器人体内系统如何升级？",
+      "answer": "Based on the provided context, there is no information describing **how** to upgrade the robot's internal system. The documents only mention that settings are retained after an upgrade (Document 1) and what to do if a firmware upgrade fails (Document 3).",
+      "faithfulness": 0.6667,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0
+    },
+    {
+      "question": "机器人充电时发热严重怎么处理？",
+      "answer": "根据文档1第140条，机器人充电时充电座发热严重的处理方法如下：\n\n1.  **移至通风处充电**；\n2.  **更换原装充电座**；\n3.  **排查短路问题**。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9288,
+      "context_precision": 1.0
+    },
+    {
+      "question": "滚刷仓内有异味怎么去除？",
+      "answer": "根据提供的文档，去除异味的方法如下：\n\n1.  **针对尘盒（通常与滚刷仓相连或作为主要异味源）：** 若尘盒有异味，可用活性炭包放入尘盒内吸附，或用中性除味剂轻擦，晾干后使用（见 Document 1 第24条及 Document 3 第24条）。\n2.  **针对刷子本身：** 如果刷子有怪味道，可以用醋泡泡，味道会慢慢淡去（见 Document 2）。\n3.  **日常预防：** 每次清扫完成后将垃圾倾倒干净，避免长时间存放滋生细菌、产生异味；在有宠物的环境使用后，立即清理主刷和尘盒，避免宠物毛发结块（见 Document 1 第25条及 Document 3 第19条）。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7524,
+      "context_precision": 1.0
+    },
+    {
+      "question": "边刷磨损后有什么影响？如何更换？",
+      "answer": "根据提供的文档，关于边刷磨损的影响及更换方法如下：\n\n**影响：**\n*   若地面有尖锐杂物或非原装边刷，可能导致边刷磨损过快，更换后不久即损坏（Document 1）。\n*   当刷毛磨损至小于1cm、变形或断裂时，需要更换（Document 2）。\n*   变形严重时需要更换（Document 3）。\n\n**如何更换/维护：**\n*   **清理环境**：清理地面上的尖锐杂物（Document 1）。\n*   **使用原装配件**：确保使用原装边刷（Document 1）。\n*   **增加频率**：在多尘环境中，建议增加更换频率（如1个月更换一次）（Document 1, Document 2）。\n*   **定期检查**每6-12个月检查磨损情况（Document 3），一般建议2-3个月更换一次，多尘环境1个月更换（Document 2）。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.6659,
+      "context_precision": 0.0
+    },
+    {
+      "question": "水箱漏水怎么办？",
+      "answer": "根据文档1，水箱加水后漏水的处理方法如下：\n\n1. 检查水箱盖是否拧紧。\n2. 检查水箱密封圈是否脱落或破损。\n3. 确认出水管无堵塞。\n4. 加水至刻度线内，避免过满溢出。",
+      "faithfulness": 0.8333,
+      "answer_relevancy": 0.844,
+      "context_precision": 1.0
+    },
+    {
+      "question": "“滤网堵塞”报警如何解决？",
+      "answer": "根据提供的文档，解决“滤网堵塞”报警的方法如下：\n\n1.  **常规清理**：拆卸污水仓滤网，用清水冲洗滤网表面的杂物和污渍，晾干后装回（参考 Document 1）。\n2.  **若清理后仍报警**：检查滤网是否彻底清理干净或已破损。如果滤网破损需更换；同时擦拭传感器并重启机器人（参考 Document 3）。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.5169,
+      "context_precision": 0.8333
+    },
+    {
+      "question": "家具底部空间矮，机器人进不去怎么办？",
+      "answer": "根据提供的文档，如果家具底部空间矮导致机器人进不去，可以采取以下措施：\n\n1.  **确认高度适配**：检查家具底部高度是否低于机器人高度（Document 1, Item 54）。\n2.  **取消禁区设置**：检查是否在APP中对该区域设置了禁区，如有则取消对应区域的禁区（Document 1, Item 54）。\n3.  **手动辅助清理**：在低矮环境中，机器人进入后可能需要手动辅助清理死角（Document 2, Item 16）。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8877,
+      "context_precision": 1.0
+    },
+    {
+      "question": "APP闪退、卡顿怎么解决？",
+      "answer": "根据提供的文档，针对APP卡顿的解决方法如下：\n\n1.  **重启APP**（参考文档2第143条）。\n2.  **更新APP版本**（参考文档2第143条）。\n\n*注：文档中未提及“APP闪退”的具体解决方案。*",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.722,
+      "context_precision": 0.0
+    },
+    {
+      "question": "“边刷故障”报警怎么处理？",
+      "answer": "根据提供的文档，针对“边刷”相关的故障现象，处理方法如下：\n\n1.  **若边刷旋转时偏心、触碰机身**：检查边刷是否安装到位及转轴是否弯曲；修复方法为重新安装边刷或更换弯曲的转轴。（参考 Document 1, 第95条）\n2.  **若边刷磨损过快**：检查地面是否有尖锐杂物、边刷是否为原装以及清扫环境是否多尘；修复方法为清理尖锐杂物、更换原装边刷并增加更换频率。（参考 Document 2, 第61条）\n3.  **若边刷电机线路破损导致短路**：立即断电，联系售后更换线路，以避免触电。（参考 Document 3, 第188条）",
+      "faithfulness": null,
+      "answer_relevancy": 0.4696,
+      "context_precision": 0.0
+    },
+    {
+      "question": "机器人开机后直接报警关机怎么解决？",
+      "answer": "Based on the provided context, there is no information regarding how to solve the issue of the robot alarming and shutting down immediately after being turned on. The documents only cover specific alarms related to water tanks, mop rotation, cleaning bin water levels, sewage filter blockages, and motor issues, as well as general maintenance tips.",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0
+    },
+    {
+      "question": "厨房地面有油污怎么清理？",
+      "answer": "根据提供的文档，清理厨房地面油污的方法如下：\n\n1.  **预处理与清洁步骤**：\n    *   先开启**大吸力模式**清理油污表面的杂物。\n    *   使用**专用清洁液**配合**高档出水量进行多次拖扫**。\n    *   对于顽固油污，可先**手动预处理后再让机器人重拖**。\n\n2.  **后续保养**：\n    *   拖地后需**立即清理拖布和水箱**。\n    *   用**中性洗涤剂清洗拖布**。\n    *   **每周对水箱进行除垢**，以避免油污堵塞。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9479,
+      "context_precision": 0.8333
+    },
+    {
+      "question": "语音控制功能无反应怎么办？",
+      "answer": "基于提供的上下文，无法回答“语音控制功能无反应怎么办”的问题。\n\n**原因：**\n提供的三个文档（Document 1, 2, 3）均涉及快递服务投诉、电话沟通问题或商务合作咨询，其中没有任何关于“语音控制功能”或其故障处理的信息。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0
+    },
+    {
+      "question": "自动集尘功能不工作怎么处理？",
+      "answer": "Based on the provided context, there is no information regarding troubleshooting steps for when the automatic dust collection function is not working. The documents only describe the specifications (frequency, noise level), principle (strong suction in the base station), and maintenance (bag replacement) of the automatic dust collection feature.",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0
+    },
+    {
+      "question": "清扫后地面还有灰尘、碎屑怎么办？",
+      "answer": "根据提供的文档，清扫后地面仍有灰尘或碎屑的处理方法如下：\n\n1.  **检查与维护硬件**：检查滤网是否堵塞或过脏，及时清理或更换；检查主刷是否磨损，必要时进行更换（Document 1, Document 2）。\n2.  **调整清洁模式与设置**：\n    *   开启“精扫”模式，避免灰尘被拖布抹开（Document 1, Document 2）。\n    *   调大吸力以增强清洁效果（Document 2）。\n3.  **针对特定地面的处理**：如果是老旧水泥地出现浮灰，建议先开启大吸力模式反复清扫2次，再用中档出水量拖地，并选择吸水性强的拖布，拖完后及时清理拖布上的浮灰（Document 3）。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9192,
+      "context_precision": 1.0
+    },
+    {
+      "question": "卫生间地面清扫需要注意什么？",
+      "answer": "根据提供的文档，卫生间地面清扫需要注意以下几点：\n\n1.  **仅扫地不拖地**：防止机器人接触积水（Document 3）。\n2.  **防滑垫处理**：在卫生间门口的防滑垫处设置“禁拖区”，机器人仅对防滑垫进行扫地，避免其吸水后发霉、滋生细菌（Document 1）。\n3.  **机身清洁**：清理后需擦拭机身底部，确保无水渍（Document 3）。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9311,
+      "context_precision": 0.3333
+    },
+    {
+      "question": "冬季使用机器人需要注意什么？",
+      "answer": "根据提供的文档，冬季使用机器人需要注意以下几点：\n\n1.  **充电温度**：避免在低温环境（≤0℃）下充电，以免损坏电池；充电时应保证环境温度≥5℃。\n2.  **使用前准备**：机器人在工作前应在室温环境中静置30分钟，以避免电池续航衰减。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9939,
+      "context_precision": 0.5
+    },
+    {
+      "question": "拖地后地面还有污渍怎么解决？",
+      "answer": "根据提供的文档，拖地后地面仍有污渍或清洁不干净的处理方法如下：\n\n1.  **针对瓷砖缝隙污渍**：开启“高频振动拖地”功能（若机型支持），将出水量调至中档，配合专用瓷砖清洁液，多次拖扫缝隙区域。\n2.  **针对厨房重油污**：先开启大吸力模式清理表面杂物，使用专用清洁液配合高档出水量、多次拖扫；对于顽固油污，可手动预处理后再让机器人重拖。\n3.  **针对机器人误判或反复停留**：检查是否有顽固污渍导致机器人自动重点清洁；若为误判，可在APP中设置“禁拖区域”或手动遥控离开。\n4.  **通用建议**：确保使用正确的清洁模式（如先“精扫”再拖地以避免灰尘抹开），并检查滤网和主刷状态。",
+      "faithfulness": null,
+      "answer_relevancy": 0.8837,
+      "context_precision": 0.5
+    },
+    {
+      "question": "租房党、小户型适合什么清扫模式？",
+      "answer": "根据提供的文档，针对租房党及小户型的建议如下：\n\n1.  **机型选择**：应选择**轻便易搬运**的机型（Document 1, 81），且机身最好带提手设计以便移动（Document 2, 95）。\n2.  **清洁面积适配**：对于小户型，选择单次清扫面积**≥60㎡**的机型即可满足需求（Document 2, 97）。\n3.  **注意事项**：需注意租房电路安全（Document 1, 81）。\n\n*注：文档中未明确提及特定的“清扫模式”名称（如标准、强力等）专门针对租房或小户型，主要强调的是机型的便携性和清洁面积的适配性。*",
+      "faithfulness": 0.8333,
+      "answer_relevancy": 0.7685,
+      "context_precision": 0.0
+    },
+    {
+      "question": "开机后机器人不移动怎么办？",
+      "answer": "根据提供的文档，没有直接针对“开机后机器人不移动”这一特定故障现象的检测与修复步骤。\n\n但是，您可以参考以下相关建议进行排查：\n1. **检查电源与电池**：确认电源适配器是否插紧、电源线是否破损，电池是否安装到位（参考文档1第1条）。\n2. **检查是否有异物卡住**：若遇到大颗粒垃圾（如石子、瓶盖），及时手动清理，避免卡死机件（参考文档2第31条）；每月用软毛刷清理机器人吸口处的杂物，防止堵塞（参考文档2第32条）。\n3. **检查配件安装**：确认主刷、边刷卡扣无断裂、松动，保证配件安装牢固（参考文档2第28条）。\n4. **联系售后**：若上述操作无效或涉及主板等内部问题，请联系售后检测（参考文档1第1条）。",
+      "faithfulness": null,
+      "answer_relevancy": 0.8147,
+      "context_precision": 0.0
+    },
+    {
+      "question": "防跌落功能失效怎么办？",
+      "answer": "根据文档1，防跌落功能失效的处理方法如下：\n\n1.  **检测**：检查底部防跌落传感器是否有灰尘或是否损坏。\n2.  **修复**：擦拭传感器，并放在平整地面测试；如果传感器损坏，则联系售后更换。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8691,
+      "context_precision": 1.0
+    },
+    {
+      "question": "宠物家庭如何优化清扫效果？",
+      "answer": "根据提供的文档，宠物家庭优化清扫效果的建议如下：\n\n1.  **机型选择**：\n    *   额外关注防毛发缠绕和除味功能。\n    *   可选带“宠物模式”的机型，以强化毛发清扫（Document 2）。\n\n2.  **日常维护与清洁**：\n    *   每次清扫后全面清理主刷、尘盒和拖布（Document 1）。\n    *   每周对机器人进行除味消毒（Document 1）。\n    *   若为自动洗拖布款，需每周清理清洁刷上的毛发（Document 3）。\n\n3.  **耗材更换周期缩短**：\n    *   整体耗材更换周期缩短50%（Document 1）。\n    *   **拖布**：在宠物环境下，建议1-2个月更换一次（正常为3-6个月）（Document 3）。\n    *   **集尘袋**：在多尘/宠物家庭，建议半个月至1个月更换一次（普通家庭为1-2个月），或当集尘量达80%时及时更换（Document 3）。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8769,
+      "context_precision": 0.5
+    },
+    {
+      "question": "清扫完成后机器人不自动回充？",
+      "answer": "根据提供的上下文，针对“清扫完成后机器人不自动回充”的问题，可以参考以下检测与修复步骤：\n\n1.  **检查设置**：确认是否设置了“清扫完成自动回充”（参考文档1第196条）。\n2.  **检查充电座环境**：确保充电座周围无遮挡，且充电座通电正常（参考文档2第183条、文档3第19条）。\n3.  **检查网络与状态**：确认网络连接是否正常，以及机器人是否处于可响应指令的状态（参考文档2第183条）。\n4.  **排查故障**：查看是否有其他故障提示导致无法回充（参考文档1第196条）。",
+      "faithfulness": 0.6364,
+      "answer_relevancy": 0.8788,
+      "context_precision": 0.0
+    },
+    {
+      "question": "机器人掉漆、外观损坏影响使用吗？",
+      "answer": "根据提供的上下文，客服在对话中询问顾客“请问影响使用吗”，但上下文中并未明确说明掉漆或外观损坏是否实际影响使用功能。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.6877,
+      "context_precision": 0.0
+    },
+    {
+      "question": "“拖地系统故障”报警怎么处理？",
+      "answer": "根据提供的文档，处理“拖地系统异常”报警的方法如下：\n\n1. 检查水箱、拖布是否安装到位。\n2. 检查拖布电机是否有卡顿。\n3. 清理拖地模组的杂物和毛发。\n4. 重启机器人后若仍报警，请联系售后。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.941,
+      "context_precision": 1.0
+    },
+    {
+      "question": "机器人发出“滴滴滴”报警声是什么原因？",
+      "answer": "根据文档1第19条，机器人发出“滴滴滴”报警声时，需要查看机身指示灯代码和APP故障提示，以排查对应部件（如尘盒、滤网、电池）的问题。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8781,
+      "context_precision": 1.0
+    }
+  ]
+}

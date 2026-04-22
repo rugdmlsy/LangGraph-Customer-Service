@@ -20,8 +20,14 @@ Usage:
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Resolve repo root (.env lives two levels above this file: config/ → project/ → repo/)
+_REPO_ROOT = Path(__file__).parent.parent.parent
+_ENV_FILE = str(_REPO_ROOT / ".env")
 
 
 class Settings(BaseSettings):
@@ -41,7 +47,7 @@ class Settings(BaseSettings):
     """
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=_ENV_FILE,
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
@@ -101,6 +107,14 @@ class Settings(BaseSettings):
             "Output dimensionality of the embedding model. "
             "Must match the Milvus collection schema. "
             "paraphrase-multilingual-MiniLM-L12-v2 → 384; bge-m3 → 1024."
+        ),
+    )
+    
+    EMBEDDING_DEVICE: str = Field(
+        default="cuda",
+        description=(
+            "Torch device for embedding model. 'cuda' for GPU acceleration, 'cpu' for no GPU. "
+            "Auto-detection is not implemented, so set explicitly based on your environment."
         ),
     )
 
@@ -169,6 +183,11 @@ class Settings(BaseSettings):
     MILVUS_METRIC_TYPE: str = Field(
         default="COSINE",
         description="Distance metric. COSINE for normalised embeddings; IP or L2 otherwise.",
+    )
+    
+    MILVUS_BATCH_SIZE: int = Field(
+        default=1000,
+        description="Number of vectors to insert in one batch during bulk loading.",
     )
 
     # ------------------------------------------------------------------ #

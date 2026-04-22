@@ -1,0 +1,155 @@
+{
+  "timestamp": "2026-04-21T16:48:18.548837",
+  "test_file": "data/test/扫地机器人100问2.txt",
+  "n_samples": 20,
+  "n_failed": 0,
+  "eval_time_sec": 450.2,
+  "scores": {
+    "faithfulness": 0.925,
+    "answer_relevancy": 0.6442,
+    "context_precision": 0.6923,
+    "composite_score": 0.7538
+  },
+  "per_sample": [
+    {
+      "question": "机器人可以恢复出厂设置吗？怎么操作？",
+      "answer": "可以。根据提供的文档，操作方式如下：\n\n1.  **硬件复位**：需按对复位组合键并长按足够时间，具体可按说明书操作复位（参考文档 1 第 199 条）。\n2.  **APP 设置**：在 APP【清扫设置】中点击“恢复默认”，可将吸力、出水量、清洁次数等参数恢复为出厂设置（参考文档 2 第 89 条及文档 3）。",
+      "faithfulness": null,
+      "answer_relevancy": 0.6009,
+      "context_precision": null
+    },
+    {
+      "question": "拖地后地面有水渍、水痕怎么办？",
+      "answer": "根据提供的文档，解决拖地后地面有水渍、水痕的方法如下：\n\n1.  **检查与清洁拖布**：检查拖布是否脏污、发硬板结，及时清洗或更换拖布。\n2.  **调整机器设置**：调小出水量，将机器人清扫速度调慢，避免快速拖地留下水痕。\n3.  **即时处理**：立即用干布吸干表面水分，打开门窗通风。\n4.  **后续预防**：后续拖地时调至“干拖”或最低档出水量，避免地面积水。",
+      "faithfulness": null,
+      "answer_relevancy": 0.9345,
+      "context_precision": null
+    },
+    {
+      "question": "APP无法连接机器人怎么办？",
+      "answer": "根据文档内容，若APP无法连接（控制或绑定）机器人，建议采取以下措施：\n\n1. **检测**：确认网络连接是否正常，APP是否为最新版本，机器人是否处于待机状态或配网模式，账号密码是否正确。\n2. **修复**：切换网络，更新APP，重置密码，重启机器人，切换机器人配网模式，重新绑定设备。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9191,
+      "context_precision": null
+    },
+    {
+      "question": "机器人清扫面积与标注不符怎么处理？",
+      "answer": "根据文档 1 第 152 条，当 APP 清扫记录显示错误（如清扫面积与实际不符）时，处理方法为：重新建图，校准定位，清理 APP 缓存。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.4047,
+      "context_precision": 1.0
+    },
+    {
+      "question": "异常报警提示如何处理？",
+      "answer": "查看错误代码，常见问题 APP 会有解决方案指引。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.2652,
+      "context_precision": 1.0
+    },
+    {
+      "question": "清洁液可以随意添加吗？",
+      "answer": "提供的上下文中没有关于清洁液是否可以随意添加的信息。",
+      "faithfulness": null,
+      "answer_relevancy": null,
+      "context_precision": 0.0
+    },
+    {
+      "question": "万向轮卡顿、异响怎么解决？",
+      "answer": "根据提供的文档，解决万向轮卡顿、异响的方法如下：\n\n1. **清理杂物**：检查并清理轮组缠绕的毛发、杂物。\n2. **添加润滑油**：在万向轮、驱动轮转轴处滴1-2滴专用润滑油。\n3. **更换部件**：若轮面磨损严重、转动卡顿或异响，需更换万向轮/驱动轮。",
+      "faithfulness": null,
+      "answer_relevancy": null,
+      "context_precision": null
+    },
+    {
+      "question": "大颗粒垃圾（如饼干渣）吸不进去怎么办？",
+      "answer": "根据文档1第39条，针对大颗粒杂物吸不进去的情况：\n1. 建议手动清理后再让机器人工作。\n2. 检查吸口是否被堵塞，将吸力调至最高档，清理主刷和边刷的缠绕物。",
+      "faithfulness": null,
+      "answer_relevancy": null,
+      "context_precision": null
+    },
+    {
+      "question": "地毯上的灰尘清理不彻底怎么处理？",
+      "answer": "提供的上下文中未包含针对“地毯上的灰尘清理不彻底”的具体处理方法。文档中仅提及与地毯相关的维护建议：在长毛地毯环境下，主刷建议每1-3个月更换，若出现磨损、变形或开裂应立即更换。",
+      "faithfulness": 0.75,
+      "answer_relevancy": null,
+      "context_precision": 0.0
+    },
+    {
+      "question": "如何查询机器人的保修期限？",
+      "answer": "提供的上下文中未说明如何查询机器人的保修期限，仅提及整机保修范围一般为 1-2 年。",
+      "faithfulness": 0.5,
+      "answer_relevancy": null,
+      "context_precision": 0.0
+    },
+    {
+      "question": "有儿童的家庭使用机器人需要注意什么？",
+      "answer": "根据提供的上下文，有儿童的家庭使用机器人需要注意以下几点：\n\n1. **安全方面**：开启童锁功能，避免小零件被误吞。\n2. **清洁方面**：拖地仅用清水，避免添加清洁液。\n3. **卫生维护**：拖布每次使用后高温消毒，机器人机身每日擦拭。",
+      "faithfulness": null,
+      "answer_relevancy": null,
+      "context_precision": 0.0
+    },
+    {
+      "question": "漏扫某个区域怎么解决？",
+      "answer": "检查是否设置了禁区，尝试重新建图或手动遥控补扫。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.3752,
+      "context_precision": 1.0
+    },
+    {
+      "question": "镜面、玻璃旁机器人建图错乱怎么解决？",
+      "answer": "根据提供的上下文，解决镜面、玻璃旁机器人建图错乱的方法如下：\n\n1. **预防措施**：清扫前清理机器人避障传感器，避免反光导致建图错乱，并每周擦拭传感器（参考文档 1 第 15 条）。\n2. **修复措施**：遮挡反光物，重新建图（参考文档 2 第 144 条）。",
+      "faithfulness": null,
+      "answer_relevancy": null,
+      "context_precision": null
+    },
+    {
+      "question": "禁区设置后机器人仍进入怎么办？",
+      "answer": "根据文档1第23条，检测禁区边界是否设置准确，机器人是否识别新地图，是否开启临时禁区取消功能；修复：调整禁区范围，重新识别地图，关闭临时取消功能。",
+      "faithfulness": 1.0,
+      "answer_relevancy": null,
+      "context_precision": 1.0
+    },
+    {
+      "question": "建图不完整、地图错乱怎么解决？",
+      "answer": "根据文档1，解决方法为：遮挡反光物，清理移动障碍物，删除旧地图重新建图。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.4385,
+      "context_precision": null
+    },
+    {
+      "question": "滤网堵塞会有什么症状？如何清理？",
+      "answer": "根据提供的文档内容，回答如下：\n\n**症状：**\n会出现“污水仓滤网堵塞”报警或“滤网堵塞报警”。\n\n**清理方法：**\n1. 拆卸滤网，用清水冲洗滤网表面的杂物和污渍，晾干后装回。\n2. 若清理后仍提示报警，需检查滤网是否彻底干净或破损，以及传感器是否故障。必要时更换破损滤网、擦拭传感器并重启机器人。",
+      "faithfulness": null,
+      "answer_relevancy": 0.8011,
+      "context_precision": 1.0
+    },
+    {
+      "question": "驱动轮打滑、不转怎么处理？",
+      "answer": "根据提供的文档，处理方案如下：\n\n1.  **驱动轮不转**（参考文档1第113条）：\n    *   **检测**：检查驱动轮是否缠绕杂物，电机是否故障，线路是否松动。\n    *   **修复**：清理杂物，联系售后检测电机和线路。\n\n2.  **驱动轮打滑**（参考文档2第69条及文档3第6条）：\n    *   **检测**：检查驱动轮是否磨损，地面是否有水渍或过滑，驱动轮是否缠绕毛发、杂物。\n    *   **修复**：更换驱动轮，清理地面水渍，清理轮组缠绕物，或更换干燥地面测试。",
+      "faithfulness": null,
+      "answer_relevancy": 0.8024,
+      "context_precision": 1.0
+    },
+    {
+      "question": "机器人清扫时路线混乱怎么办？",
+      "answer": "根据文档 1 第 21 条内容，机器人清扫路线混乱、无规律时，处理方法如下：\n\n*   **检测**：检查是否开启规划式清扫，地图是否完整，环境是否有新障碍物。\n*   **修复**：开启规划模式，重新建图，清理新障碍物。",
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9005,
+      "context_precision": 1.0
+    },
+    {
+      "question": "机器人可以清理床底、沙发底吗？",
+      "answer": "可以。根据文档内容，需清理床底、沙发底的缠绕物，确保机器人可顺利进入，并可在APP中对该区域设置“深度拖扫”，增大吸力和拖地次数以优化效果。",
+      "faithfulness": null,
+      "answer_relevancy": null,
+      "context_precision": 1.0
+    },
+    {
+      "question": "机器人可以清理宠物猫砂、狗砂吗？",
+      "answer": "根据文档 1 第 96 条，拖地时若地面残留猫砂、狗砂无法清理，属于故障现象，修复方法为调大吸力、开启宠物模式、调小出水量。",
+      "faithfulness": 1.0,
+      "answer_relevancy": null,
+      "context_precision": 1.0
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+1. 一开始选用bge-large作为embedding模型，但是由于corpus大多是短文本，语义密度低，不需要高维，故改成

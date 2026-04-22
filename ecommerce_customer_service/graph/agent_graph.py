@@ -308,9 +308,14 @@ def init_graph(settings: Any = None) -> Any:
     from rag import Embedder, KnowledgeBase, SlidingWindowChunker, Retriever
     embedder = Embedder(settings.EMBEDDING_MODEL_NAME)
     chunker  = SlidingWindowChunker(settings.CHUNK_SIZE, settings.CHUNK_OVERLAP)
-    kb       = KnowledgeBase(embedder, chunker, settings.MILVUS_HOST, settings.MILVUS_PORT)
+    kb       = KnowledgeBase(
+        embedder, chunker,
+        settings.MILVUS_HOST, settings.MILVUS_PORT,
+        collection_name=settings.MILVUS_COLLECTION_NAME,
+    )
     kb.connect()
-    retriever = Retriever(kb, embedder, settings.RERANKER_MODEL_NAME)   
+    kb.create_collection(settings.MILVUS_COLLECTION_NAME, settings.EMBEDDING_DIM)
+    retriever = Retriever(kb, embedder, settings.RERANKER_MODEL_NAME)
     
     from agents import RouterAgent, FAQAgent, OrderAgent, ResponseAgent
     from tools import ALL_TOOLS

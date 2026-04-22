@@ -450,12 +450,13 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
 # 3. 启动 Milvus（独立，Docker）
-docker run -d --name milvus \
-  -p 19530:19530 -p 9091:9091 \
-  milvusdb/milvus:v2.4.9 standalone
+# docker run -d --name milvus \
+#   -p 19530:19530 -p 9091:9091 \
+#   milvusdb/milvus:v2.4.9 standalone
+bash standalone_embed.sh start
 
 # 4. 启动 Redis
-docker run -d --name redis -p 6379:6379 redis:7.2
+docker run -d --name redis -p 6379:6379 redis:7.4
 
 # 5. 启动 vLLM（需要 GPU 和 ~16GB VRAM 用于 7B 模型）
 vllm serve Qwen/Qwen2.5-7B-Instruct \

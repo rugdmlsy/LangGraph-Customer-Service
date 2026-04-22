@@ -82,11 +82,26 @@ class MockLogisticsService:
     tracking_db: dict[str, dict]
 
     def __init__(self) -> None:
-        """
-        Initialise with seed data.
-        """
         self.logistics_db = dict(_SEED_LOGISTICS)
-        self.tracking_db = dict(_SEED_TRACKING)
+        self.tracking_db  = dict(_SEED_TRACKING)
+        self._load_from_redis()
+
+    def _load_from_redis(self) -> None:
+        """Load seeded logistics/tracking data from Redis."""
+        try:
+            import json
+            import redis as _redis
+            r = _redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
+            for key in r.keys("mock:logistics:*"):
+                rec = json.loads(r.get(key))
+                self.logistics_db[rec["order_id"]] = rec
+            for key in r.keys("mock:tracking:*"):
+                rec = json.loads(r.get(key))
+                self.tracking_db[rec["tracking_number"]] = rec
+            extra = len(self.logistics_db) - len(_SEED_LOGISTICS)
+            logger.info("Loaded %d extra logistics records from Redis", extra)
+        except Exception as exc:
+            logger.debug("Redis seed load skipped: %s", exc)
 
     def get_logistics(self, order_id: str) -> dict:
         """

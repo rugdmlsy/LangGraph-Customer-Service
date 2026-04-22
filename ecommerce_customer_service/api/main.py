@@ -38,7 +38,6 @@ from typing import Any
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from graph.agent_graph import _compiled_graph_singleton
 from config import settings
 from graph.agent_graph import init_graph
 from message_queue.message_queue import RedisQueue
@@ -150,9 +149,10 @@ def get_compiled_graph() -> Any:
         async def chat(req: ChatRequest, graph=Depends(get_compiled_graph)):
             ...
     """
-    if _compiled_graph_singleton is None:
+    graph = getattr(app.state, "graph", None)
+    if graph is None:
         raise HTTPException(status_code=503, detail="Agent graph not initialised")
-    return _compiled_graph_singleton
+    return graph
 
 
 def get_message_queue() -> Any:
@@ -186,34 +186,6 @@ async def lifespan(app: FastAPI):
         1. Stop the QueueWorker gracefully (wait for in-flight tasks).
         2. Close Milvus connection.
         3. Close Redis connection.
-
-    How to implement:
-        from config import settings
-        from graph.agent_graph import init_graph
-        from message_queue.message_queue import RedisQueue
-        from message_queue.worker import QueueWorker
-        import redis
-
-        # Startup
-        logger.info("Initialising agent graph...")
-        graph = init_graph(settings)
-        app.state.graph = graph
-
-        redis_client = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
-        app.state.queue = RedisQueue(redis_client, key=settings.REDIS_QUEUE_KEY)
-
-        if settings.USE_QUEUE:
-            worker = QueueWorker(app.state.queue, lambda m: graph.invoke({...}))
-            app.state.worker_thread = worker.start_in_background()
-            app.state.worker = worker
-
-        logger.info("System ready.")
-        yield
-
-        # Shutdown
-        if settings.USE_QUEUE:
-            app.state.worker.stop()
-        logger.info("System shutdown complete.")
     """
     # Startup
     logger.info("Initialising agent graph...")
